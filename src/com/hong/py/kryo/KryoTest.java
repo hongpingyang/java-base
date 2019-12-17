@@ -4,7 +4,9 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
 import com.hong.py.pojo.Student;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,7 +26,14 @@ public class KryoTest {
     private static Input input;
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
+
         kryo = new Kryo();
+        //对于没有无参构造需要
+        //而StdInstantiatorStrategy在是依据JVM version信息及JVM vendor信息创建对象的，
+        //可以不调用对象的任何构造方法创建对象。
+        kryo.setInstantiatorStrategy(new DefaultInstantiatorStrategy(
+                new StdInstantiatorStrategy()));
+
         kryo.register(Student.class);
         Student student = new Student("hongpy", 18);
         output = new Output(new FileOutputStream("file.txt"));
