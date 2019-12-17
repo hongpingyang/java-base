@@ -14,13 +14,13 @@ public class ThreadConditionClass {
 	{
 		lock.lock();		
 		try {
-			while(count==5)
+			while(count==5) //已经满了，put不能执行执行。
 				notfull.await();
 			
 			count++;
 
 			//通知执行
-			notEmpty.signal();
+			notEmpty.signal(); //有数据了，通知可以继续执行get了，
 			
 			System.out.println("填充数据"+count);
 			
@@ -34,13 +34,13 @@ public class ThreadConditionClass {
 		lock.lock();
 		
 		try {
-			while(count==0)
+			while(count==0) //没有数据了，get不能继续执行。
 				notEmpty.await();
 			
 			count--;
 			
 			//通知执行
-			notfull.signal();
+			notfull.signal(); // 取走了一个数据，通知可以继续put了
 			
 			System.out.println("获取数据"+count);
 			
