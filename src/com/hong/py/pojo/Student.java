@@ -16,9 +16,13 @@ package com.hong.py.pojo;
  * <p>
  * Copyright © 2019 hongpy Technologies Inc. All Rights Reserved
  **/
-public class Student {
+public class Student implements Cloneable {
     private String name;
     private Integer age;
+
+    public Student() {
+
+    }
 
     public Student(String name, int age) {
         this.name=name;
@@ -39,5 +43,18 @@ public class Student {
 
     public void setAge(Integer age) {
         this.age = age;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "name='" + name + '\'' +
+                ", age=" + age +
+                '}';
     }
 }

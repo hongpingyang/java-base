@@ -17,9 +17,22 @@ package com.hong.py;
  * Copyright © 2019 hongpy Technologies Inc. All Rights Reserved
  **/
 public class Hello {
+
+    {
+        System.out.println("this is an initBlock");
+    }
+
     public static void main(String[] args) {
         int i=2147483647;
+        Integer xad=(Integer) i;
+        xad.intValue();
+
+        int ad= (int)xad;
+
         long sa= i+2L;
+
+        System.out.println("");
+
         System.out.println(sa);
         float asd=1.3f;
         int x=100;
@@ -27,12 +40,21 @@ public class Hello {
         System.out.println(d);
     }
 
+    private String name;
+
+
     public Hello(){
 
     }
 
+
     public void say(String name) {
         System.out.println("Hello"+name);
+    }
+
+    public Object newInstance(String name) {
+        this.name=name;
+        return this;
     }
 }
 
