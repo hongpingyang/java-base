@@ -18,6 +18,8 @@ package com.hong.py.selfAnnotation;
  **/
 public class AnnotationTest {
 
+
+
     public static void main(String[] args) throws ClassNotFoundException {
         Class<?> aClass = Class.forName("com.hong.py.selfAnnotation.AnnotationTestDemo");
         if (aClass.isAnnotationPresent(HpyAnnotation.class)) {
