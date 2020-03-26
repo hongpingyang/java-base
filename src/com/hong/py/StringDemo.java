@@ -1,5 +1,7 @@
 package com.hong.py;
 
+import java.util.ArrayList;
+
 /**
  * 文件描述
  *
@@ -22,13 +24,22 @@ public class StringDemo {
         String s = new String("123");
         System.out.println(s.getBytes());
         String s1 = "123";
-        System.out.println(s1.getBytes());
+        System.out.println(s1.getBytes().toString());
         System.out.println(s1==s);
 
+        byte[] by1 = s1.getBytes();
+        for(int i=0;i<by1.length;i++) {
+            System.out.println(by1[i]);
+        }
+
         String s2 = "123";
-        System.out.println(s2.getBytes());
+        System.out.println(s2.getBytes().toString());
         System.out.println(s1==s2);
 
+        byte[] by2 = s2.getBytes();
+        for(int i=0;i<by2.length;i++) {
+            System.out.println(by2[i]);
+        }
         //字符相同。所以hashcode()相同
         System.out.println(s1.hashCode()
                 +"----"+s.hashCode()
@@ -42,5 +53,37 @@ public class StringDemo {
         System.out.println(System.identityHashCode(s1)
                 +"-----"+System.identityHashCode(s2));
 
+        String s3 = DealStr1("?11000?01?", -1);
+        for (String str:results) {
+            System.out.println(str);
+        }
     }
+    static ArrayList<String> results =new ArrayList<String>();
+
+    public static String DealStr1(String str,int num) {
+        if (!str.isEmpty()) {
+            if(!str.contains("?"))
+            {
+                results.add(str);
+            }
+            for (int i = 0; i < str.length(); i++) {
+                if(str.substring(i,i+1).equals("?")) {
+                    DealStr1(str.substring(0,i)+"1"+str.substring(i+1),1);
+                    DealStr1(str.substring(0,i)+"0"+str.substring(i+1),0);
+                    if(num==1) {
+                        return str.substring(0, i) + "1" + str.substring(i + 1);
+                    }
+                    else if(num==0){
+                        return str.substring(0, i) + "0" + str.substring(i + 1);
+                    }
+                    else
+                    {
+                       return "";
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
 }

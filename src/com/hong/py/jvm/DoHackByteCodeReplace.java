@@ -33,8 +33,8 @@ public class DoHackByteCodeReplace {
      * @throws NoSuchMethodException
      */
     public static void main(String[] args) throws IOException, NoSuchMethodException {
-
-        InputStream fileInputStream = new FileInputStream("E:\\ideaWorkSpace\\01-java-base\\src\\com\\hong\\py\\jvm\\HackByteCodeReplaceDemo.class");
+        System.out.println(new File(".").getAbsolutePath());
+        InputStream fileInputStream = new FileInputStream("src/com/hong/py/jvm/HackByteCodeReplaceDemo.class");
         byte[] bytecode = new byte[fileInputStream.available()];
         fileInputStream.read(bytecode);
         fileInputStream.close();
