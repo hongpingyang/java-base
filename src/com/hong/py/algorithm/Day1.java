@@ -52,8 +52,8 @@ public class Day1 {
         arrayList.add(new int[]{1,2});
         mapArrayList.put(2,arrayList);
 
-        int i = NumN(4);
-        System.out.println(mapArrayList.get(4).size());
+        int i = NumN(3);
+        System.out.println(mapArrayList.get(3).size());
     }
 
 
@@ -65,10 +65,10 @@ public class Day1 {
         int value=0;
 
         //for (int i = 2; i <=n-1 ; i++) {
-
+            ArrayList<int[]> newarrayList = new ArrayList<>();
             for (int j = 0; j < NumN(n-1); j++) {
                    ArrayList<int[]> arrayList = mapArrayList.get(n-1);
-                   ArrayList<int[]> newarrayList = new ArrayList<>();
+
                     if(arrayList!=null)
                     {
                         //for (int[] array: arrayList) {
@@ -95,12 +95,13 @@ public class Day1 {
                                 newarrayList.add(arraynew2);
                             }
                           //}
-                                mapArrayList.put(n,newarrayList);
+
                        }
 
                 }
          //   }
         }
+        mapArrayList.put(n,newarrayList);
         return mapArrayList.get(n).size();
     }
 
