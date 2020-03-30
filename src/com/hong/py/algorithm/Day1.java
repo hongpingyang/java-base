@@ -52,8 +52,8 @@ public class Day1 {
         arrayList.add(new int[]{1,2});
         mapArrayList.put(2,arrayList);
 
-        int i = NumN(3);
-        System.out.println(mapArrayList.get(3).size());
+        int i = NumN(5);
+        System.out.println(mapArrayList.get(5).size());
     }
 
 
@@ -102,7 +102,7 @@ public class Day1 {
          //   }
         }
         mapArrayList.put(n,newarrayList);
-        return mapArrayList.get(n).size();
+        return value;
     }
 
 }
