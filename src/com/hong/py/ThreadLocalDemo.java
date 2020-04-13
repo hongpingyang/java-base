@@ -20,8 +20,24 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @Version: 1.0
  * <p>
  * Copyright © 2019 hongpy Technologies Inc. All Rights Reserved
+ *
+ *
+ * 由于ThreadLocal对象的set()方法设置的值只对当前线程可见，那有什么方法可以为ThreadLocal对象设置的值对所有线程都可见。
+ *
+ * 为此，我们可以通过ThreadLocal子类的实现，并覆写initialValue()方法，就可以为ThreadLocal对象指定一个初始化值。如下所示:
+ *
+ *
  **/
 public class ThreadLocalDemo {
+
+    //此时，在set()方法调用前，当调用get()方法的时候，所有线程都可以看到同一个初始化值。
+    private static ThreadLocal myThreadLocal = new ThreadLocal<String>(){
+        @Override
+        protected String initialValue() {
+            return   "This is the initial value";
+        }
+    };
+
 
     private static ThreadLocal<Integer> local = new ThreadLocal<>();
 
@@ -55,7 +71,7 @@ public class ThreadLocalDemo {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("当前线程"+Thread.currentThread().getName()+" : "+doGet());
+            System.out.println("当前线程"+Thread.currentThread().getName()+" : "+doGet()+" : "+doMyGet());
 
         }
     }
@@ -63,7 +79,12 @@ public class ThreadLocalDemo {
 
 
     private static void doSet(Integer integer) {
+        myThreadLocal.set("哈哈"+integer);
         local.set(integer);
+    }
+
+    private static String doMyGet() {
+        return (String)myThreadLocal.get();
     }
 
     private static Integer doGet() {
