@@ -1,8 +1,6 @@
 package com.hong.py;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -62,11 +60,12 @@ public class MapTest {
         map.put("岳不群",3);
         map.put("田伯光",5);
         map.put("左冷禅",100);
+        //这个不能保存
+        map.put(new String("东方不败"),1000);
         //注意HashMap可以插入null值，但ConcurrentHashMap不可以
         map.put(null,null);
 
          //注意HashMap是无序的，遍历的时候的顺序不一定是加入时候的顺序
-
 
         //遍历推荐使用方式2
         //方式1 相当于遍历了2遍
@@ -105,6 +104,25 @@ public class MapTest {
             System.out.println(entry.getKey()+":"+entry.getValue());
         }
 
+        System.out.println("=====================");
+        IdentityHashMap<String,Integer> identityHashMap = new IdentityHashMap<String,Integer>();
+
+        //IdentityHashMap的==操作是比较的内存地址，
+        // 如果不是指向同一块内存，
+        // 那这时候才可以保存相同的数据。
+        identityHashMap.put("东方不败",1);
+        identityHashMap.put("岳不群",3);
+        identityHashMap.put("田伯光",5);
+        identityHashMap.put("左冷禅",100);
+        //所以这个不能保存
+        identityHashMap.put("东方不败",500);
+        //所以这个能保存
+        identityHashMap.put(new String("东方不败"),1000);
+        identityHashMap.put(null,null);
+
+        for (Map.Entry<String,Integer> entry:identityHashMap.entrySet()) {
+            System.out.println(entry.getKey()+":"+entry.getValue());
+        }
 
     }
 }

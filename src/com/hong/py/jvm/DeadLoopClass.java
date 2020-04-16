@@ -12,6 +12,7 @@ public class DeadLoopClass {
 
     /**
      * 注意这里执行main和在DeadLoopClassTest里执行main的区别
+     * 这里会执行一开始就执行静态代码块导致一直在循环。线程没有启动。
      * @param args
      */
     public static void main(String[] args) {
