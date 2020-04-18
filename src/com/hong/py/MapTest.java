@@ -54,6 +54,10 @@ public class MapTest {
         System.out.println(n);
 
         //集合初始化时指定集合初始值大小。随着元素增加，导致扩容，需要重新建hash表，严重影响性能。
+        // static final int TREEIFY_THRESHOLD = 8;
+        // static final int UNTREEIFY_THRESHOLD = 6;
+        //当链表长度大于等于8的时候会变换成红黑树
+        //当红黑树元素个数小于等于6会退回到链表
         final Map<String,Integer> map=new HashMap();
         //map = new HashMap<>();
         map.put("东方不败",1);
@@ -125,4 +129,5 @@ public class MapTest {
         }
 
     }
+
 }
