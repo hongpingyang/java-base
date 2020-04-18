@@ -12,11 +12,16 @@ import java.util.Random;
  * description:
  * life for code
  *
- * Mysql 百万数据10秒批量插入
+ * Mysql 百万数据批量插入
  *
  * 执行时间：35489ms
  *
  * 修改 bulk_insert_buffer_size=100M,max_allowed_packet=50M
+ *
+ * bulk_insert_buffer_size：
+ * 用来缓存批量插入数据的时候临时缓存写入数据。
+ * mysql会使用这个内存区域来缓存批量结构的数据以帮助批量写入数据文件。
+ *
  * com.mysql.jdbc.PacketTooBigException: Packet for query is too large (37667368 > 4194304).
  * You can change this value on the server by setting the max_allowed_packet' variable.
  *

@@ -1,5 +1,7 @@
 package com.hong.py;
 
+import com.hong.py.concurrent.HashMap1;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -66,6 +68,9 @@ public class MapTest {
         map.put("左冷禅",100);
         //这个不能保存
         map.put(new String("东方不败"),1000);
+        for (int i = 0; i < 50; i++) {
+            map.put("测试" + i, i);
+        }
         //注意HashMap可以插入null值，但ConcurrentHashMap不可以
         map.put(null,null);
 
@@ -73,18 +78,38 @@ public class MapTest {
 
         //遍历推荐使用方式2
         //方式1 相当于遍历了2遍
-        for (Object key: map.keySet()) {
+        Set<String> strings = map.keySet();
+
+        strings.forEach((str)->{
+            System.out.println(str);
+        });
+
+        for (String key: strings) {
             System.out.println(key+":"+map.get(key));
         }
+
+        Set<Map.Entry<String, Integer>> entries = map.entrySet();
+        entries.forEach((entry)->
+                System.out.println(entry.getKey()+":"+entry.getValue())
+                );
+
         //方式2
-        for (Map.Entry entry:map.entrySet()){
+        for (Map.Entry entry: entries){
             System.out.println(entry.getKey()+":"+entry.getValue());
         }
+
+
+        //多线程并行执行迭代的迭代器
+        Spliterator<Map.Entry<String, Integer>> spliterator = entries.spliterator();
+
+
+
 
         System.out.println(map.containsKey("令狐冲"));
         System.out.println(map.containsValue(100));
 
         System.out.println(map);
+
 
         /**
          * java8 为map新增的方法
@@ -93,6 +118,43 @@ public class MapTest {
 
         map.forEach((o, o2) -> {System.out.println(o);
             System.out.println(o2);});
+
+        //如果存在大侠，就用原来的值，如果不存在就用新值
+        Integer 大侠 = map.computeIfAbsent("大侠", str -> {
+            return 10000;
+        });
+
+        System.out.println(大侠);
+
+        //如果存在大侠，就用计算的值，如果不存在返回null
+        //这里old是存在的话的oldValue
+        //注意这里如果存在的话，old值为null,函数里用到的话要进行判断
+        Integer 大侠1 = map.computeIfPresent("大侠", (str,old) -> {
+
+            return 10000+old;
+        });
+        System.out.println(大侠1);
+
+        //如果存在大侠2，就用计算的值，如果不存在会新增一个 key为大侠，值为计算的值。
+        //注意这里如果不存在的话，old值为null,函数里用到的话要进行判断
+        //这里old是存在的话的oldValue
+        Integer 大侠2 = map.compute("大侠2", (str,old) -> {
+
+            return 10000 + (old == null ? 0 : old);
+        });
+        System.out.println(大侠2);
+
+
+        //如果存在大侠2，就用表达式计算的值，如果不存在会新增一个 key为大侠2，然后值value为9999。
+        //注意这里如果不存在的话，old值为null,函数里用到的话要进行判断
+        //这里old是存在的话的oldValue,mergeValue为要覆盖的 9999
+        Integer 大侠3 = map.merge("大侠2", 9999, (old,mergeValue) -> {
+
+            return mergeValue + (old == null ? 0 : old);
+        });
+        System.out.println(大侠3);
+
+
 
         ConcurrentMap map1 = new ConcurrentHashMap();
         map1.put("Key", "value");
