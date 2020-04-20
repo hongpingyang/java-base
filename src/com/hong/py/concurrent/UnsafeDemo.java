@@ -16,12 +16,26 @@ public class UnsafeDemo {
 
     static Unsafe unsafe=null;
 
+    private static int ABASE = 0;
+
+    private static  int ASHIFT = 0;
+
     static {
         Field theUnsafe = null;
         try {
             theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
             theUnsafe.setAccessible(true);
             unsafe = (Unsafe)theUnsafe.get(null);
+
+            Class<?> ak = ForkJoinTask_Source[].class;
+            //数组的第一个元素的地址
+            ABASE = unsafe.arrayBaseOffset(ak);
+            //scale为元素的大小
+            int scale = unsafe.arrayIndexScale(ak);
+            if ((scale & (scale - 1)) != 0) //这个必须是2的次幂
+                throw new Error("data type scale not a power of two");
+
+            ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

@@ -38,6 +38,11 @@ public class Hello {
         int x=100;
         long d= x+2;
         System.out.println(d);
+
+        Double d1=Double.NaN;
+        Double d2=35867d;
+        //注意Double里的compare的写法，考虑了NaN
+        System.out.println(d1.compareTo(d2));
     }
 
     private String name;
