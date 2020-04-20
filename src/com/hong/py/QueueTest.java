@@ -3,12 +3,14 @@ package com.hong.py;
 import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class QueueTest {
 
-    public static void main(String[] args) {
-        TestPriorityQueue();
-        TestArrayDeque();
+    public static void main(String[] args) throws InterruptedException {
+        //TestPriorityQueue();
+        //TestArrayDeque();
 
         TestLinkedList();
     }
@@ -72,8 +74,7 @@ public class QueueTest {
 
     }
 
-    private  static  void TestLinkedList()
-    {
+    private  static  void TestLinkedList() throws InterruptedException {
         System.out.println("==============");
         LinkedList linkedList=new LinkedList();
 
@@ -94,5 +95,35 @@ public class QueueTest {
 
         System.out.println(linkedList.pollLast());
         System.out.println(linkedList);
+
+        for (int i = 0; i < 100; i++) {
+            linkedList.add("测试"+i);
+        }
+
+        System.out.println("================");
+        //并行拆分器好像没啥用啊！！？？？
+        Spliterator spliterator = linkedList.spliterator();
+        ConcurrentHashMap<String, Integer> threadExecute = new ConcurrentHashMap<>();
+        Thread[] threads = new Thread[5];
+        for (int i = 0; i <5 ; i++) {
+            threads[i]=new Thread(()->{
+                final String name = Thread.currentThread().getName();
+                if (threadExecute.get(name) == null) {
+                    threadExecute.put(name,0);
+                }
+                System.out.println();
+                Spliterator spliterator1;
+                if((spliterator1=spliterator.trySplit())!=null)
+                    spliterator1.forEachRemaining((e)->{
+                    System.out.println(e+"===="+name);
+                    threadExecute.put(name, threadExecute.get(name) + 1);
+                  });
+            });
+
+            threads[i].start();
+        }
+        for (int i = 0; i <5 ; i++) {
+            threads[i].join();
+        }
     }
 }

@@ -255,7 +255,7 @@ abstract class Striped64_Source extends Number {
             //Random初始化种子seed和PROBE
             ThreadLocalRandom.current(); // force initialization
             h = getProbe();
-            //没有竞争
+            //默认没有竞争
             wasUncontended = true;
         }
         boolean collide = false;                // True if last slot nonempty
@@ -296,7 +296,7 @@ abstract class Striped64_Source extends Number {
                 }
                 //后面都是Cell槽不为空
 
-                // wasUncontended有竞争，继续循环
+                // !wasUncontended有竞争，重新hash计算下继续循环
                 else if (!wasUncontended)       // CAS already known to fail
                     wasUncontended = true;      // Continue after rehash
                 //cell槽不为空，尝试CAS一把
@@ -305,14 +305,15 @@ abstract class Striped64_Source extends Number {
                         fn.applyAsLong(v, x))))
                     break;
                 //上面的尝试失败了
-                //如果cells数组长度大于等于CPU数量，或者cells != as
-                //
+                //如果cells数组长度大于等于CPU数量(大于能同时并发的线程数没有意义，继续循环肯定能加入成功)，或者cells != as(已经有线程在扩容了)
+                //这个是判断扩容之前的一次拦截
                 else if (n >= NCPU || cells != as)
                     collide = false;            // At max size or stale
+                //可以满足扩容了，扩容之前再循环一次尝试一下 ...
                 else if (!collide)
                     collide = true;
                 //到这说明之前的hash值计算的槽被别的线程占了，且尝试多次CAS失败
-                //需要扩容并重新计算hash值，然后再去循环处理。
+                //需要扩容
                 //获取到cellbusy锁
                 else if (cellsBusy == 0 && casCellsBusy()) {
                     try {

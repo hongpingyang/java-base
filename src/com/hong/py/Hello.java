@@ -43,6 +43,11 @@ public class Hello {
         Double d2=35867d;
         //注意Double里的compare的写法，考虑了NaN
         System.out.println(d1.compareTo(d2));
+
+        int l = Integer.numberOfLeadingZeros(16) | (1 << (16 - 1));
+        System.out.println((l<<16)+2);
+        System.out.println((l<<16)+1);
+        System.out.println(l);
     }
 
     private String name;
