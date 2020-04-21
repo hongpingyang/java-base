@@ -28,14 +28,25 @@ public class UnsafeDemo {
             unsafe = (Unsafe)theUnsafe.get(null);
 
             Class<?> ak = ForkJoinTask_Source[].class;
+            Class<?> ak1 = long[].class;
             //数组的第一个元素的地址
             ABASE = unsafe.arrayBaseOffset(ak);
             //scale为元素的大小
             int scale = unsafe.arrayIndexScale(ak);
+            int scale1 = unsafe.arrayIndexScale(ak1);
+            System.out.println("ak:"+scale);
+            System.out.println("ak1:"+scale1);
             if ((scale & (scale - 1)) != 0) //这个必须是2的次幂
                 throw new Error("data type scale not a power of two");
 
+            System.out.println(Integer.numberOfLeadingZeros(1<<16));
+            System.out.println(Integer.numberOfLeadingZeros((1<<32)-1));
+            System.out.println(Integer.numberOfLeadingZeros((1<<31)));
+            System.out.println(Integer.numberOfLeadingZeros((0)));
             ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
+            System.out.println(ASHIFT);
+
+            System.out.println(0x0001L << (32 + 15));
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

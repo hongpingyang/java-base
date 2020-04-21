@@ -1656,21 +1656,30 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
     final void signalWork(WorkQueue[] ws, WorkQueue q) {
         long c; int sp, i; WorkQueue v; Thread p;
         while ((c = ctl) < 0L) {                       // too few active
+
             if ((sp = (int)c) == 0) {                  // no idle workers
+
                 if ((c & ADD_WORKER) != 0L)            // too few workers
+
                     tryAddWorker(c);
                 break;
             }
             if (ws == null)                            // unstarted/terminated
                 break;
+            //SMASK是0xffff
             if (ws.length <= (i = sp & SMASK))         // terminated
                 break;
             if ((v = ws[i]) == null)                   // terminating
                 break;
+
             int vs = (sp + SS_SEQ) & ~INACTIVE;        // next scanState
+
             int d = sp - v.scanState;                  // screen CAS
+
             long nc = (UC_MASK & (c + AC_UNIT)) | (SP_MASK & v.stackPred);
+
             if (d == 0 && U.compareAndSwapLong(this, CTL, c, nc)) {
+
                 v.scanState = vs;                      // activate v
                 if ((p = v.parker) != null)
                     U.unpark(p);
@@ -2359,23 +2368,23 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
 
                 throw new RejectedExecutionException();
             }
-            //初始化状态
+            //初始化 WorkQueue数组
             else if ((rs & STARTED) == 0 ||     // initialize
                     ((ws = workQueues) == null || (m = ws.length - 1) < 0)) {
-
                 int ns = 0;
-
                 rs = lockRunState();
-
                 try {
                     if ((rs & STARTED) == 0) {
                         U.compareAndSwapObject(this, STEALCOUNTER, null,
                                 new AtomicLong());
                         // create workQueues array with size a power of two
                         int p = config & SMASK; // ensure at least 2 slots
+
+                        //下面一段代码是获取比p大的最小2次幂数并 *2
                         int n = (p > 1) ? p - 1 : 1;
                         n |= n >>> 1; n |= n >>> 2;  n |= n >>> 4;
                         n |= n >>> 8; n |= n >>> 16; n = (n + 1) << 1;
+
                         workQueues = new WorkQueue[n];
                         ns = STARTED;
                     }
@@ -2385,15 +2394,22 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
             }
             else if ((q = ws[k = r & m & SQMASK]) != null) {
                 if (q.qlock == 0 && U.compareAndSwapInt(q, QLOCK, 0, 1)) {
+                    //把任务要添加到数组种
                     ForkJoinTask_Source<?>[] a = q.array;
+
                     int s = q.top;
+
                     boolean submitted = false; // initial submission or resizing
                     try {                      // locked version of push
                         if ((a != null && a.length > s + 1 - q.base) ||
                                 (a = q.growArray()) != null) {
+
                             int j = (((a.length - 1) & s) << ASHIFT) + ABASE;
+
                             U.putOrderedObject(a, j, task);
+
                             U.putOrderedInt(q, QTOP, s + 1);
+
                             submitted = true;
                         }
                     } finally {
@@ -2406,11 +2422,16 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
                 }
                 move = true;                   // move on failure
             }
+            //没有找到WorkQueue 那得新建一个
             else if (((rs = runState) & RSLOCK) == 0) { // create new queue
+
                 q = new WorkQueue(this, null);
                 q.hint = r;
                 q.config = k | SHARED_QUEUE;
                 q.scanState = INACTIVE;
+
+                //加入到数组中
+                //自旋获取锁
                 rs = lockRunState();           // publish index
                 if (rs > 0 &&  (ws = workQueues) != null &&
                         k < ws.length && ws[k] == null)
@@ -2419,7 +2440,7 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
             }
             else
                 move = true;                   // move if busy
-            if (move)
+            if (move)//重新hash
                 r = advanceProbe(r);//ThreadLocalRandom.advanceProbe(r);
         }
     }
@@ -2437,19 +2458,24 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
         //r为当前线程里的hash值
         int r = getProbe();//ThreadLocalRandom.getProbe();
         int rs = runState;
+        //workQueues为null，表示第一个线程来执行
+        //m & r & SQMASK 获取数组中偶数的位置
         if ((ws = workQueues) != null && (m = (ws.length - 1)) >= 0 &&
                 (q = ws[m & r & SQMASK]) != null && r != 0 && rs > 0 &&
-                U.compareAndSwapInt(q, QLOCK, 0, 1)) {//加锁成功
+                U.compareAndSwapInt(q, QLOCK, 0, 1)) {//当前q上加锁成功
 
             ForkJoinTask_Source<?>[] a; int am, n, s;
-            //WorkQueue里的数组不为空
+            //WorkQueue里的ForkJoinTask_Source数组不为空
             if ((a = q.array) != null &&
                     (am = a.length - 1) > (n = (s = q.top) - q.base)) {
 
+                //计算任务放入的地址
+                //am & s 为放入的数组位置
                 int j = ((am & s) << ASHIFT) + ABASE;
+                //任务放入a数组j的位置
                 U.putOrderedObject(a, j, task);
+                //设置q的top加1
                 U.putOrderedInt(q, QTOP, s + 1);
-
                 //解锁
                 U.putIntVolatile(q, QLOCK, 0);
                 if (n <= 1)
@@ -3430,7 +3456,8 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
             int scale = U.arrayIndexScale(ak);
             if ((scale & (scale - 1)) != 0) //这个必须是2的次幂
                 throw new Error("data type scale not a power of two");
-
+            //numberOfLeadingZeros从左往右第一个0的位置。
+            //首位为1的位置
             ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
 
         } catch (Exception e) {

@@ -1051,7 +1051,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
                 }
             }
         }
-        //
+        //Count加一。并处理是否需要扩容迁移
         addCount(1L, binCount);
         return null;
     }
@@ -2247,6 +2247,8 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      */
     private final void addCount(long x, int check) {
         CounterCell[] as; long b, s;
+
+        //处理Count 处理一个count这么复杂
         if ((as = counterCells) != null ||
                 !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
             //counterCells不为null 或者counterCells为null,但给baseCount赋值失败
@@ -2404,6 +2406,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
 
             stride = MIN_TRANSFER_STRIDE; // subdivide range
 
+        //第一个线程进来初始化新数组
         if (nextTab == null) {            // initiating
             try {
                 @SuppressWarnings("unchecked")
@@ -2415,36 +2418,51 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
                 return;
             }
             nextTable = nextTab;
+            //transferIndex默认为老数组的大小，
+            //迁移是按照从后往前的顺序迁移。
             transferIndex = n;
         }
         int nextn = nextTab.length;
-        // 创建一个 fwd 节点，用于占位。当别的线程发现这个槽位中是 fwd 类型的节点，则跳过这个节点。
+        //创建一个 fwd 节点，用于占位。当别的线程发现这个槽位中是 fwd 类型的节点，则跳过这个节点。
+        //在添加节点的时候看到是fwd 类型的节点，则会去帮忙转移。
         ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab);
-
+        //用于判断是否可以继续去分配区间，
         boolean advance = true;
         boolean finishing = false; // to ensure sweep before committing nextTab
         // 死循环,i 表示下标，bound 表示当前线程可以处理的当前桶区间最小下标
         for (int i = 0, bound = 0;;) {
             Node<K,V> f; int fh;
-
+            //advance==true 表示 处理了一个节点或者线程第一次进入这里
             while (advance) {
+                //这里面是  处理范围和是否结束的判断，
                 int nextIndex, nextBound;
+                // --i >= bound 表示 还在下标范围内，可以继续去转移其他节点，跳出循环去处理迁移
+                // finishing=true是迁移完成了
                 if (--i >= bound || finishing)
                     advance = false;
+                //到底了
                 else if ((nextIndex = transferIndex) <= 0) {
                     i = -1;
                     advance = false;
                 }
+                //第一次进来  或者  已经一个范围处理结束了但整个迁移没有结束，
+                // CAS来获取下一个需要处理的区间
                 else if (U.compareAndSwapInt
                         (this, TRANSFERINDEX, nextIndex,
                                 nextBound = (nextIndex > stride ?
                                         nextIndex - stride : 0))) {
+
+                    //bound为这一次处理范围的下界
                     bound = nextBound;
+                    //i为数组下标
                     i = nextIndex - 1;
+                    //分配好了，去迁移吧
                     advance = false;
                 }
             }
-
+            //i<0 表示有一个线程已经处理到数组最后一个了，你可以去判断是否迁移结束 并且sc-1了，
+            //i>=n 表示用来不是处理数组最后一个的线程来检查，你可以去判断是否迁移结束 并且sc-1了，
+            //i + n >= nextn 啥意思？
             if (i < 0 || i >= n || i + n >= nextn) {
                 int sc;
                 if (finishing) { //完成了扩容
@@ -2453,13 +2471,16 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
                     sizeCtl = (n << 1) - (n >>> 1); //2n-n/2= 3n/2 = 2n* 3/4
                     return;
                 }
+                //完成后CAS把sc-1 参考addCount函数的说明
                 if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
+                    //不相等说明还有线程在执行，等等它。
                     if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)
                         return;
+                    //完成了
                     finishing = advance = true;
+                    //需要进入上面的判断来检查是否迁移结束
                     i = n; // recheck before commit
                 }
-
             }
             //i节点位置是空的，放入刚刚初始化的ForwardingNode
             else if ((f = tabAt(tab, i)) == null)
@@ -2468,13 +2489,16 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
             else if ((fh = f.hash) == MOVED)
                 advance = true; // already processed
             else {
+                //不为空，且不是Fwd，加锁去处理迁移
                 synchronized (f) {
                     if (tabAt(tab, i) == f) {
                         Node<K,V> ln, hn;
                         if (fh >= 0) {
-
                             int runBit = fh & n;
                             Node<K,V> lastRun = f;
+                            //lastRun就是找到 后面相同hsah值的最前一个
+                            // 例如 后面的hash排序是 0,1,0,2,3,0,2(lastRun),2,2
+                            // 这样的好处是后面的相同的不用进行新生成Node。
                             for (Node<K,V> p = f.next; p != null; p = p.next) {
                                 int b = p.hash & n;
                                 if (b != runBit) {
@@ -2482,6 +2506,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
                                     lastRun = p;
                                 }
                             }
+
                             if (runBit == 0) {
                                 ln = lastRun;
                                 hn = null;
@@ -2492,7 +2517,9 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
                             }
 
                             for (Node<K,V> p = f; p != lastRun; p = p.next) {
+
                                 int ph = p.hash; K pk = p.key; V pv = p.val;
+
                                 if ((ph & n) == 0)
                                     ln = new Node<K,V>(ph, pk, pv, ln);
                                 else
@@ -2503,8 +2530,9 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
                             setTabAt(nextTab, i, ln);
                             //放到nextTab新位置i+n的
                             setTabAt(nextTab, i + n, hn);
-
+                            //迁移完后放入fwd
                             setTabAt(tab, i, fwd);
+                            //当前节点迁移完成，继续去处理其他
                             advance = true;
                         }
                         else if (f instanceof TreeBin) {

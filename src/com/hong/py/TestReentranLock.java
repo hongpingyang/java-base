@@ -22,6 +22,8 @@ public class TestReentranLock {
 	            new PutThread("p"+i, i).start();
 	            new TakeThread("t"+i).start();
 	    }
+
+        Thread.currentThread().interrupt();
 	}
     
     static class PutThread extends Thread {
