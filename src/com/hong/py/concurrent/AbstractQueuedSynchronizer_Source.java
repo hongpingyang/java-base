@@ -69,6 +69,7 @@ package com.hong.py.concurrent;
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
+import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -102,19 +103,6 @@ import sun.misc.Unsafe;
  * {@link #acquireInterruptibly} that can be invoked as
  * appropriate by concrete locks and related synchronizers to
  * implement their public methods.
- *
- * <p>This class supports either or both a default <em>exclusive</em>
- * mode and a <em>shared</em> mode. When acquired in exclusive mode,
- * attempted acquires by other threads cannot succeed. Shared mode
- * acquires by multiple threads may (but need not) succeed. This class
- * does not &quot;understand&quot; these differences except in the
- * mechanical sense that when a shared mode acquire succeeds, the next
- * waiting thread (if one exists) must also determine whether it can
- * acquire as well. Threads waiting in the different modes share the
- * same FIFO queue. Usually, implementation subclasses support only
- * one of these modes, but both can come into play for example in a
- * {@link ReadWriteLock}. Subclasses that support only exclusive or
- * only shared modes need not define the methods supporting the unused mode.
  *
  * <p>This class defines a nested {@link ConditionObject} class that
  * can be used as a {@link Condition} implementation by subclasses
@@ -418,8 +406,10 @@ public abstract class AbstractQueuedSynchronizer_Source
      */
     static final class Node {
         /** Marker to indicate a node is waiting in shared mode */
+        //共享的都是这一个
         static final Node SHARED = new Node();
         /** Marker to indicate a node is waiting in exclusive mode */
+        //独占
         static final Node EXCLUSIVE = null;
 
         /** waitStatus value to indicate thread has cancelled */
@@ -701,7 +691,7 @@ public abstract class AbstractQueuedSynchronizer_Source
                 if (t.waitStatus <= 0)
                     s = t;
         }
-        //找到了通知它
+        //node.next通知它
         if (s != null)
             LockSupport.unpark(s.thread);
     }
@@ -730,7 +720,9 @@ public abstract class AbstractQueuedSynchronizer_Source
                 if (ws == Node.SIGNAL) {
                     if (!compareAndSetWaitStatus(h, Node.SIGNAL, 0))
                         continue;            // loop to recheck cases
+                    System.out.println(Thread.currentThread().getName()+"去唤醒后面的");
                     unparkSuccessor(h);
+
                 }
                 else if (ws == 0 &&
                         !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
@@ -772,6 +764,7 @@ public abstract class AbstractQueuedSynchronizer_Source
                 (h = head) == null || h.waitStatus < 0) {
             Node s = node.next;
             if (s == null || s.isShared())
+                //如果这个是共享了去唤醒所有共享的线程
                 doReleaseShared();
         }
     }
@@ -882,6 +875,7 @@ public abstract class AbstractQueuedSynchronizer_Source
      * @return {@code true} if interrupted
      */
     private final boolean parkAndCheckInterrupt() {
+        System.out.println(Thread.currentThread().getName()+"当前线程阻塞了");
         LockSupport.park(this);
         return Thread.interrupted();
     }
@@ -999,17 +993,23 @@ public abstract class AbstractQueuedSynchronizer_Source
     /**
      * Acquires in shared uninterruptible mode.
      * @param arg the acquire argument
+     * 共享锁
      */
     private void doAcquireShared(int arg) {
+        //添加一个SHARED的Node到CLH队尾
         final Node node = addWaiter(Node.SHARED);
+        System.out.println(Thread.currentThread().getName()+"加入了队列");
         boolean failed = true;
         try {
             boolean interrupted = false;
+            boolean isinterrupted=true;
             for (;;) {
+                //遍历尝试获取锁
                 final Node p = node.predecessor();
                 if (p == head) {
                     int r = tryAcquireShared(arg);
-                    if (r >= 0) {
+                    if (r >= 0) {//获取到了
+                        //设置为头节点，且会去唤醒后面的共享节点的线程。
                         setHeadAndPropagate(node, r);
                         p.next = null; // help GC
                         if (interrupted)
@@ -1018,9 +1018,17 @@ public abstract class AbstractQueuedSynchronizer_Source
                         return;
                     }
                 }
+                //是否需要park阻塞。
+
                 if (shouldParkAfterFailedAcquire(p, node) &&
-                        parkAndCheckInterrupt())
+                        (isinterrupted=parkAndCheckInterrupt())) {
+                    System.out.println(Thread.currentThread().getName()+"阻塞被打断");
                     interrupted = true;
+                }
+
+                if(!isinterrupted) {
+                    System.out.println(Thread.currentThread().getName() + "阻塞被唤醒");
+                }
             }
         } finally {
             if (failed)
@@ -1102,15 +1110,6 @@ public abstract class AbstractQueuedSynchronizer_Source
     // Main exported methods
 
     /**
-     * Attempts to acquire in exclusive mode. This method should query
-     * if the state of the object permits it to be acquired in the
-     * exclusive mode, and if so to acquire it.
-     *
-     * <p>This method is always invoked by the thread performing
-     * acquire.  If this method reports failure, the acquire method
-     * may queue the thread, if it is not already queued, until it is
-     * signalled by a release from some other thread. This can be used
-     * to implement method {@link Lock#tryLock()}.
      *
      * <p>The default
      * implementation throws {@link UnsupportedOperationException}.
@@ -1243,7 +1242,6 @@ public abstract class AbstractQueuedSynchronizer_Source
      * returning on success.  Otherwise the thread is queued, possibly
      * repeatedly blocking and unblocking, invoking {@link
      * #tryAcquire} until success.  This method can be used
-     * to implement method {@link Lock#lock}.
      *
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquire} but is otherwise uninterpreted and
@@ -1264,7 +1262,6 @@ public abstract class AbstractQueuedSynchronizer_Source
      * success.  Otherwise the thread is queued, possibly repeatedly
      * blocking and unblocking, invoking {@link #tryAcquire}
      * until success or the thread is interrupted.  This method can be
-     * used to implement method {@link Lock#lockInterruptibly}.
      *
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquire} but is otherwise uninterpreted and
@@ -1287,7 +1284,6 @@ public abstract class AbstractQueuedSynchronizer_Source
      * queued, possibly repeatedly blocking and unblocking, invoking
      * {@link #tryAcquire} until success or the thread is interrupted
      * or the timeout elapses.  This method can be used to implement
-     * method {@link Lock#tryLock(long, TimeUnit)}.
      *
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquire} but is otherwise uninterpreted and
@@ -1514,7 +1510,7 @@ public abstract class AbstractQueuedSynchronizer_Source
      * shared mode (that is, this method is invoked from {@link
      * #tryAcquireShared}) then it is guaranteed that the current thread
      * is not the first queued thread.  Used only as a heuristic in
-     * ReentrantReadWriteLock.
+     * ReentrantReadWriteLock_Source.
      */
     final boolean apparentlyFirstQueuedIsExclusive() {
         Node h, s;
@@ -1733,6 +1729,7 @@ public abstract class AbstractQueuedSynchronizer_Source
         /*
          * If cannot change waitStatus, the node has been cancelled.
          */
+        //CAS尝试把当前waitStatus改为0 如果失败了，doSignal会一直重试。够执着啊
         if (!compareAndSetWaitStatus(node, Node.CONDITION, 0))
             return false;
 
@@ -1741,11 +1738,16 @@ public abstract class AbstractQueuedSynchronizer_Source
          * indicate that thread is (probably) waiting. If cancelled or
          * attempt to set waitStatus fails, wake up to resync (in which
          * case the waitStatus can be transiently and harmlessly wrong).
+         * 在这种情况下，waitStatus可能是暂时的、无害的错误 ???
          */
+        //插入到CLH尾部 并返回前驱节点p
         Node p = enq(node);
         int ws = p.waitStatus;
+        //如果被取消了，或者CAS操作失败，uppark唤醒一次node的线程,让他去竞争锁
+        //否则，说明前驱节点就是SIGNAL了，它正在等待唤醒，
         if (ws > 0 || !compareAndSetWaitStatus(p, ws, Node.SIGNAL))
             LockSupport.unpark(node.thread);
+
         return true;
     }
 
@@ -1931,8 +1933,12 @@ public abstract class AbstractQueuedSynchronizer_Source
          */
         private void doSignal(Node first) {
             do {
+                //将当前node的nextWaiter赋值给firstWaiter
                 if ( (firstWaiter = first.nextWaiter) == null)
+                    //如果为null说明就自己一个
                     lastWaiter = null;
+
+                //将当前node的nextWaiter置位null，断开
                 first.nextWaiter = null;
             } while (!transferForSignal(first) &&
                     (first = firstWaiter) != null);
@@ -1944,6 +1950,7 @@ public abstract class AbstractQueuedSynchronizer_Source
          */
         private void doSignalAll(Node first) {
             lastWaiter = firstWaiter = null;
+            //遍历去通知全部在await的节点
             do {
                 Node next = first.nextWaiter;
                 first.nextWaiter = null;
@@ -1997,8 +2004,10 @@ public abstract class AbstractQueuedSynchronizer_Source
          *         returns {@code false}
          */
         public final void signal() {
+            //这个就是判断当前线程是不占有锁，你没有占有锁，你唤醒个毛
             if (!isHeldExclusively())
                 throw new IllegalMonitorStateException();
+            //唤醒第一个
             Node first = firstWaiter;
             if (first != null)
                 doSignal(first);
@@ -2030,6 +2039,7 @@ public abstract class AbstractQueuedSynchronizer_Source
          *      {@link #acquire} with saved state as argument.
          * </ol>
          */
+        //忽略中断的等待
         public final void awaitUninterruptibly() {
             Node node = addConditionWaiter();
             int savedState = fullyRelease(node);
@@ -2094,18 +2104,27 @@ public abstract class AbstractQueuedSynchronizer_Source
         public final void await() throws InterruptedException {
             if (Thread.interrupted())
                 throw new InterruptedException();
+            //新增一个waitStatus为CONDITION的Node，并添加到condition queue队列里
             Node node = addConditionWaiter();
+            //释放锁，这也为啥await必须要先获取到锁。
             int savedState = fullyRelease(node);
             int interruptMode = 0;
+            //释放成功后，检测node是否transfer到CLH队列中了，
+            //没有的话park，等待唤醒。
             while (!isOnSyncQueue(node)) {
                 LockSupport.park(this);
+                //检测是否是被打断的
                 if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)
                     break;
             }
+            //被打断了 或者 被唤醒了且已经到CLH尾部了
+
+            // acquireQueued尝试CAS获取锁，必须获取到锁才能继续执行
             if (acquireQueued(node, savedState) && interruptMode != THROW_IE)
                 interruptMode = REINTERRUPT;
             if (node.nextWaiter != null) // clean up if cancelled
                 unlinkCancelledWaiters();
+            //是被打断的
             if (interruptMode != 0)
                 reportInterruptAfterWait(interruptMode);
         }
@@ -2319,7 +2338,7 @@ public abstract class AbstractQueuedSynchronizer_Source
      * are at it, we do the same for other CASable fields (which could
      * otherwise be done with atomic field updaters).
      */
-    private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private static final Unsafe unsafe;// = Unsafe.getUnsafe();
     private static final long stateOffset;
     private static final long headOffset;
     private static final long tailOffset;
@@ -2328,6 +2347,11 @@ public abstract class AbstractQueuedSynchronizer_Source
 
     static {
         try {
+            //换成这个写法
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            unsafe = (Unsafe)theUnsafe.get(null);
+
             stateOffset = unsafe.objectFieldOffset
                     (AbstractQueuedSynchronizer_Source.class.getDeclaredField("state"));
             headOffset = unsafe.objectFieldOffset

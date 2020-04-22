@@ -10,7 +10,7 @@ import com.hong.py.pojo.ThreadConditionClass;
 public class TestReentranLock {
 	
 	// true 表示为公平锁，false为非公平锁
-    static ReentrantLock lock=new ReentrantLock(true);
+    static ReentrantLock lock=new ReentrantLock(false);
     static ThreadConditionClass threadConditionClass=new ThreadConditionClass();
     
     public static void main(String[] args) {

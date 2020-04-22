@@ -87,7 +87,7 @@ public class ManagementFactoryTest {
             sb.append('\n');
         }
 
-        //常指的ReentrantLock 和 ReentrantReadWriteLock 锁
+        //常指的ReentrantLock 和 ReentrantReadWriteLock_Source 锁
         LockInfo[] locks = threadInfo.getLockedSynchronizers();
         if (locks.length > 0) {
             sb.append("\n\tNumber of locked synchronizers = " + locks.length);

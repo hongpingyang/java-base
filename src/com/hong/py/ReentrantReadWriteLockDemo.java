@@ -1,9 +1,11 @@
 package com.hong.py;
 
+import com.hong.py.concurrent.ReentrantReadWriteLock_Source;
+
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 文件描述
@@ -23,49 +25,81 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  **/
 public class ReentrantReadWriteLockDemo {
 
-    private static final Map<String, Object> m = new TreeMap<String, Object>();
+    private static final Map<Integer, Object> m = new TreeMap<Integer, Object>();
 
-    private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock_Source rwl = new ReentrantReadWriteLock_Source();
 
-    private static final Lock r = rwl.readLock();
+    private static final ReentrantReadWriteLock_Source.ReadLock r = rwl.readLock();
 
-    private static final Lock w = rwl.writeLock();
+    private static final ReentrantReadWriteLock_Source.WriteLock w = rwl.writeLock();
+
+
 
     static ReentrantReadWriteLockDemo demo = new ReentrantReadWriteLockDemo();
 
 
-    //但是在写线程访问时，
+    //
     public static void main(String[] args) {
 
         for (int i = 0; i <100 ; i++) {
-            demo.put(i + "", i);
+            //demo.put(i, i);
+            m.put(i, i);
         }
 
-        //读数据
+        Condition condition = w.newCondition();
+
+        //写数据 写锁是独占锁，
+        for (int i = 0; i <1; i++) {
+            int num=i+1;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    w.lock();
+                    System.out.println(Thread.currentThread().getName()+"写锁进入");
+
+                    try {
+                        Thread.sleep(8000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    for (int j = num*10; j < num*10+10; j++) {
+                        m.put(j, j);
+                    }
+                    System.out.println(Thread.currentThread().getName()+"写锁退出");
+
+                    w.unlock();
+                }
+            }).start();
+        }
+
+
+        //读锁是共享锁。
         for (int i = 0; i < 5; i++) {
             int num=i+1;
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    for (int j = num*10; j < num*10+10; j++) {
-                        demo.get(j + "");
+                    r.lock();
+
+                    System.out.println(Thread.currentThread().getName()+"读锁进入");
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
+                    for (int j = 0; j < 1; j++) {
+                        System.out.println(m.get(j));
+                    }
+
+                    System.out.println(Thread.currentThread().getName()+"读锁退出");
+
+                    r.unlock();
                 }
             }).start();
         }
 
-        //写数据
-        for (int i = 0; i < 5; i++) {
-            int num=i+1;
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    for (int j = num*10; j < num*10+10; j++) {
-                        demo.put(j + "", j);
-                    }
-                }
-            }).start();
-        }
 
 
 
@@ -75,7 +109,7 @@ public class ReentrantReadWriteLockDemo {
 
 
 
-    public Object get(String key)
+    public Object get(Integer key)
     {
 
         r.lock();
@@ -125,7 +159,7 @@ public class ReentrantReadWriteLockDemo {
 
 
 
-    public Object put(String key, Object value)
+    public Object put(Integer key, Object value)
 
     {
 
