@@ -569,7 +569,7 @@ public abstract class AbstractQueuedSynchronizer_Source
      * This operation has memory semantics of a {@code volatile} read.
      * @return current state value
      */
-    protected final int getState() {
+    public final int getState() {
         return state;
     }
 
@@ -775,6 +775,8 @@ public abstract class AbstractQueuedSynchronizer_Source
      * Cancels an ongoing attempt to acquire.
      *
      * @param node the node
+     *
+     * 取消获取锁 置为CANCELLED
      */
     private void cancelAcquire(Node node) {
         // Ignore if node doesn't exist
@@ -1022,7 +1024,7 @@ public abstract class AbstractQueuedSynchronizer_Source
 
                 if (shouldParkAfterFailedAcquire(p, node) &&
                         (isinterrupted=parkAndCheckInterrupt())) {
-                    System.out.println(Thread.currentThread().getName()+"阻塞被打断");
+                    System.out.println(Thread.currentThread().getName()+"被打断");
                     interrupted = true;
                 }
 
@@ -1039,6 +1041,7 @@ public abstract class AbstractQueuedSynchronizer_Source
     /**
      * Acquires in shared interruptible mode.
      * @param arg the acquire argument
+     * 阻塞被打断线程会抛出异常
      */
     private void doAcquireSharedInterruptibly(int arg)
             throws InterruptedException {
@@ -1057,8 +1060,11 @@ public abstract class AbstractQueuedSynchronizer_Source
                     }
                 }
                 if (shouldParkAfterFailedAcquire(p, node) &&
-                        parkAndCheckInterrupt())
+                        parkAndCheckInterrupt()) {
+                    System.out.println(Thread.currentThread().getName()+"被打断了");
+                    //打断会抛异常
                     throw new InterruptedException();
+                }
             }
         } finally {
             if (failed)
@@ -1303,7 +1309,6 @@ public abstract class AbstractQueuedSynchronizer_Source
     /**
      * Releases in exclusive mode.  Implemented by unblocking one or
      * more threads if {@link #tryRelease} returns true.
-     * This method can be used to implement method {@link Lock#unlock}.
      *
      * @param arg the release argument.  This value is conveyed to
      *        {@link #tryRelease} but is otherwise uninterpreted and
@@ -1352,6 +1357,7 @@ public abstract class AbstractQueuedSynchronizer_Source
      */
     public final void acquireSharedInterruptibly(int arg)
             throws InterruptedException {
+        //打断会抛异常
         if (Thread.interrupted())
             throw new InterruptedException();
         if (tryAcquireShared(arg) < 0)
@@ -1393,6 +1399,9 @@ public abstract class AbstractQueuedSynchronizer_Source
      */
     public final boolean releaseShared(int arg) {
         if (tryReleaseShared(arg)) {
+            //返回true的需要通知排队的共享节点，已唤醒线程。
+            //例如Semaphpored的release每次都会通知
+            //例如CountDownLatch的CountDown，只有到了state为0了才去通知。
             doReleaseShared();
             return true;
         }
@@ -1878,8 +1887,6 @@ public abstract class AbstractQueuedSynchronizer_Source
 
     /**
      * Condition implementation for a {@link
-     * AbstractQueuedSynchronizer_Source} serving as the basis of a {@link
-     * Lock} implementation.
      *
      * <p>Method documentation for this class describes mechanics,
      * not behavioral specifications from the point of view of Lock

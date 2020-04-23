@@ -1,6 +1,13 @@
 package com.hong.py;
 
+import com.hong.py.concurrent.AbstractQueuedSynchronizer_Source;
+import com.hong.py.concurrent.Semaphore_Source;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
  * 文件描述
@@ -26,15 +33,48 @@ import java.util.concurrent.Semaphore;
  **/
 public class SemaphoreTest {
 
-    private volatile  Semaphore executesLimit;
-
+    private volatile Semaphore_Source executesLimit;
+    private static List<Thread> testThreads = new ArrayList<>();
     public static void main(String[] args) throws InterruptedException {
 
         SemaphoreTest test = new SemaphoreTest();
         //允许的最大并行执行线程为5
-        test.getExecutesLimit(5);
+        //是共享锁
+        //他这个是直接设置state了 acquire的时候是去-1  这是与其他锁的区别
+        test.getExecutesLimit(2);
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
+            Thread thread=new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        action(test);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            testThreads.add(thread);
+            thread.start();
+        }
+
+        Thread.sleep(5000);
+        //来打断一下线程
+        Collection<Thread> queuedThreads = ((test.executesLimit)).getQueuedThreads();
+        int i=0;
+        for (Thread thread : queuedThreads) {
+            if (i == 0) {
+                thread.interrupt();
+            }
+            i++;
+        }
+
+        for (Thread thread : testThreads) {
+            thread.join();
+        }
+
+        System.out.println("重新检查信号量=========");
+        for (int y = 0; y < 5; y++) {
             Thread thread=new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -47,17 +87,27 @@ public class SemaphoreTest {
             });
             thread.start();
         }
+
     }
 
     public static void action(SemaphoreTest test) throws InterruptedException {
 
-        test.executesLimit.acquire(); //内部实现是compareAndSwapInt 自旋锁，会阻塞
+        //打断会抛异常 如果自己catch也能继续运行，但是没有获取到锁。
+        // 后面的release会导致信号量多加
+        boolean interrupted=false;
+        try {
+            test.executesLimit.acquire(); //内部实现是compareAndSwapInt 自旋锁，会阻塞，
+        } catch (InterruptedException e) {
+            interrupted=true;
+            e.printStackTrace();
+        }
+        System.out.println(Thread.currentThread().getName() + ":doSomething start-"+test.executesLimit.getSync().getState());
 
-        System.out.println(Thread.currentThread().getName() + ":doSomething start-");
-        Thread.sleep(2000);
-        System.out.println(Thread.currentThread().getName() + ":doSomething end-" );
+        Thread.sleep(interrupted?1000:8000);
+        System.out.println("....");
 
         test.executesLimit.release();
+        System.out.println(Thread.currentThread().getName() + ":doSomething end-"+test.executesLimit.getSync().getState());
     }
 
     /**
@@ -65,11 +115,11 @@ public class SemaphoreTest {
      * @param maxNum
      * @return
      */
-    private Semaphore getExecutesLimit(int maxNum) {
+    private Semaphore_Source getExecutesLimit(int maxNum) {
         if (executesLimit == null || maxNum > 0) {
             synchronized (this) {
                 if (executesLimit == null || maxNum > 0) {
-                      executesLimit = new Semaphore(maxNum);
+                      executesLimit = new Semaphore_Source(maxNum);
                     }
                 }
             }

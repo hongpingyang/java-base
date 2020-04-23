@@ -27,21 +27,27 @@ import java.util.concurrent.TimeUnit;
  * CyclicBarrier支持复用和barrierCommand，但是CountDownLatch不支持。
  *
  * 它们的作用就是会让所有线程都等待完成后才会继续下一步行动。
+ * CyclicBarrier一般是用在 等待的线程 数到达一个阈值才开始执行。控制线程进行并行的执行
+ * CountDownLatch一般是用在 等已经执行countDown()了的线程数到达一个阈值，才继续执行。
  *
  **/
 public class RateLimiterDemo {
 
     //等待10个wait栅栏
+    //CyclicBarrier本质是利用ReenTranLock和Condition 来实现的
+    //设置了初始parties(等待的线程 数)，每次await会parties-1，
+    // 当变为0 的时候会打破barrier，调用Condition的sinalAll()去唤醒所有线程。
     static CyclicBarrier cyclicBarrier=new CyclicBarrier(10);
 
     //代表每秒生成10个令牌
     //还可以通过Semaphore来实现。
     static RateLimiter rateLimiter = RateLimiter.create(10);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         for (int i = 0; i < 10; i++) {
             Mythread mythread = new Mythread();
+            Thread.sleep(1000);
             mythread.start();
         }
     }

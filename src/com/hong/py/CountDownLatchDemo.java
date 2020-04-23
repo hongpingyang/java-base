@@ -34,11 +34,34 @@ public class CountDownLatchDemo implements  Runnable{
             exec.submit(demo);
         }
 
-        //等待全部执行完成
-        latch.await();
 
+        Thread thread=new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                //等待全部执行完成 会被唤醒
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                // 发射火箭
+                System.out.println("Fire!");
+            }
+        });
+        thread.start();
+
+        //等待全部执行完成 会被唤醒
+        latch.await();
         // 发射火箭
-        System.out.println("Fire!");
+        System.out.println("Fire2!");
+
+
+
+        //等待全部执行完成
+        latch.await(); //不用等待了 没有进入队列， 已经是state为0了
+        // 发射火箭
+        System.out.println("Fire3!");
         // 关闭线程池
         exec.shutdown();
     }
