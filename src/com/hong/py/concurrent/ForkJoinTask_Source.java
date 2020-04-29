@@ -69,7 +69,10 @@ package com.hong.py.concurrent;
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
+import sun.misc.Unsafe;
+
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.RandomAccess;
@@ -1544,7 +1547,12 @@ public abstract class ForkJoinTask_Source<V> implements Future<V>, Serializable 
         exceptionTableRefQueue = new ReferenceQueue<Object>();
         exceptionTable = new ExceptionNode[EXCEPTION_MAP_CAPACITY];
         try {
-            U = sun.misc.Unsafe.getUnsafe();
+            //U = sun.misc.Unsafe.getUnsafe();
+            //换成这个写法
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            U = (Unsafe)theUnsafe.get(null);
+
             Class<?> k = ForkJoinTask_Source.class;
             STATUS = U.objectFieldOffset
                     (k.getDeclaredField("status"));

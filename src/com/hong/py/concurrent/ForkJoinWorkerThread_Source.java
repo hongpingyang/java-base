@@ -70,6 +70,9 @@ package com.hong.py.concurrent;
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.concurrent.ForkJoinPool;
@@ -227,7 +230,11 @@ public class ForkJoinWorkerThread_Source extends Thread {
     private static final long INHERITEDACCESSCONTROLCONTEXT;
     static {
         try {
-            U = sun.misc.Unsafe.getUnsafe();
+            //U = sun.misc.Unsafe.getUnsafe();
+            //换成这个写法
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            U = (Unsafe)theUnsafe.get(null);
             Class<?> tk = Thread.class;
             THREADLOCALS = U.objectFieldOffset
                     (tk.getDeclaredField("threadLocals"));
@@ -287,7 +294,13 @@ public class ForkJoinWorkerThread_Source extends Thread {
          */
         private static ThreadGroup createThreadGroup() {
             try {
-                sun.misc.Unsafe u = sun.misc.Unsafe.getUnsafe();
+                //sun.misc.Unsafe u = sun.misc.Unsafe.getUnsafe();
+
+                //换成这个写法
+                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+                theUnsafe.setAccessible(true);
+                sun.misc.Unsafe u = (Unsafe)theUnsafe.get(null);
+
                 Class<?> tk = Thread.class;
                 Class<?> gk = ThreadGroup.class;
                 long tg = u.objectFieldOffset(tk.getDeclaredField("group"));

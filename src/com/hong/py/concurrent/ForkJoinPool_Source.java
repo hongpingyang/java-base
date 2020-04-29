@@ -69,7 +69,10 @@ package com.hong.py.concurrent;
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
+import sun.misc.Unsafe;
+
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1252,7 +1255,11 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
         private static final long QCURRENTSTEAL;
         static {
             try {
-                U = sun.misc.Unsafe.getUnsafe();
+                //U = sun.misc.Unsafe.getUnsafe();
+                //换成这个写法
+                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+                theUnsafe.setAccessible(true);
+                U = (Unsafe)theUnsafe.get(null);
                 Class<?> wk = WorkQueue.class;
                 Class<?> ak = ForkJoinTask_Source[].class;
                 QTOP = U.objectFieldOffset
@@ -3424,7 +3431,11 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
     static {
         // initialize field offsets for CAS etc
         try {
-            U = sun.misc.Unsafe.getUnsafe();
+            //U = sun.misc.Unsafe.getUnsafe();
+            //换成这个写法
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            U = (Unsafe)theUnsafe.get(null);
             Class<?> k = ForkJoinPool_Source.class;
             CTL = U.objectFieldOffset
                     (k.getDeclaredField("ctl"));
@@ -3586,7 +3597,11 @@ public class ForkJoinPool_Source extends AbstractExecutorService {
     private static final long SECONDARY;
     static {
         try {
-            UNSAFE = sun.misc.Unsafe.getUnsafe();
+            //UNSAFE = sun.misc.Unsafe.getUnsafe();
+            //换成这个写法
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            UNSAFE = (Unsafe)theUnsafe.get(null);
             Class<?> tk = Thread.class;
             SEED = UNSAFE.objectFieldOffset
                     (tk.getDeclaredField("threadLocalRandomSeed"));
