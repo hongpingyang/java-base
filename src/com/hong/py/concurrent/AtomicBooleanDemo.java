@@ -2,9 +2,7 @@ package com.hong.py.concurrent;
 
 import com.hong.py.pojo.Student;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicStampedReference;
+import java.util.concurrent.atomic.*;
 
 /**
  * author: hongpy
@@ -18,6 +16,8 @@ public class AtomicBooleanDemo {
 
     //本质是转换为int 存入1或者0
     private static AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+
+    private static AtomicIntegerFieldUpdater<Student> fieldUpdater = AtomicIntegerFieldUpdater.newUpdater(Student.class, "age");
 
     private static int[] arrays=new int[]{0,1};
 
@@ -40,9 +40,12 @@ public class AtomicBooleanDemo {
         student.setName("洪答答");
         student.setAge(18);
 
+        fieldUpdater.getAndDecrement(student);
+
         Student student1 = new Student();
         student1.setName("洪da答");
         student1.setAge(28);
+        fieldUpdater.getAndDecrement(student1);
 
         AtomicStampedReference<Student> atomicStampedReference = new AtomicStampedReference<>(student, 0);
         Student reference = atomicStampedReference.getReference();

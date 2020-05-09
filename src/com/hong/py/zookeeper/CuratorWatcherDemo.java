@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 其对事件的监听其实可以近似看作是一个本地缓存视图和远程ZooKeeper视图的对比过程。
  * 同时Curator能够自动为开发人员处理反复注册监听，
  * 从而大大简化了原生API开发的繁琐过程。Cache分为两类监听类型：节点监听和子节点监听。
+ *
  **/
 public class CuratorWatcherDemo {
 
@@ -70,12 +71,9 @@ public class CuratorWatcherDemo {
             System.out.println("节点数据为空！");
         }
 
-        nodeCache.getListenable().addListener(new NodeCacheListener() {
-            @Override
-            public void nodeChanged() throws Exception {
-                String data = new String(nodeCache.getCurrentData().getData());
-                System.out.println("节点路径："+nodeCache.getCurrentData().getPath()+"，节点数据为："+data);
-            }
+        nodeCache.getListenable().addListener(() -> {
+            String data = new String(nodeCache.getCurrentData().getData());
+            System.out.println("节点路径："+nodeCache.getCurrentData().getPath()+"，节点数据为："+data);
         });
     }
 
@@ -99,25 +97,23 @@ public class CuratorWatcherDemo {
         });
 
         //AtomicInteger atomicInteger = new AtomicInteger(0);
-        childrenCache.getListenable().addListener(new PathChildrenCacheListener() {
-            @Override
-            public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
-                switch (pathChildrenCacheEvent.getType()) {
-                    case CHILD_ADDED:
-                        System.out.println("CHILD_ADDED: " + pathChildrenCacheEvent.getData().getPath());
-                        System.out.println("CHILD_ADDED数据: " + new String(pathChildrenCacheEvent.getData().getData()));
-                        break;
-                    case CHILD_REMOVED:
-                        System.out.println("CHILD_REMOVED: " + pathChildrenCacheEvent.getData().getPath());
-                        break;
-                    case CHILD_UPDATED:
-                        System.out.println("CHILD_UPDATED: " + pathChildrenCacheEvent.getData().getPath());
-                        System.out.println("CHILD_UPDATED数据: " + new String(pathChildrenCacheEvent.getData().getData()));
-                        break;
-                    default:
-                        break;
-                }
-            }});
+        childrenCache.getListenable().addListener((curatorFramework, pathChildrenCacheEvent) -> {
+            switch (pathChildrenCacheEvent.getType()) {
+                case CHILD_ADDED:
+                    System.out.println("CHILD_ADDED: " + pathChildrenCacheEvent.getData().getPath());
+                    System.out.println("CHILD_ADDED数据: " + new String(pathChildrenCacheEvent.getData().getData()));
+                    break;
+                case CHILD_REMOVED:
+                    System.out.println("CHILD_REMOVED: " + pathChildrenCacheEvent.getData().getPath());
+                    break;
+                case CHILD_UPDATED:
+                    System.out.println("CHILD_UPDATED: " + pathChildrenCacheEvent.getData().getPath());
+                    System.out.println("CHILD_UPDATED数据: " + new String(pathChildrenCacheEvent.getData().getData()));
+                    break;
+                default:
+                    break;
+            }
+        });
 
         }
 

@@ -1,5 +1,6 @@
 package com.hong.py.concurrent;
 
+import java.util.List;
 import java.util.concurrent.*;
 
 /**
@@ -24,18 +25,27 @@ import java.util.concurrent.*;
  *
  * submit方法会吃掉异常 execute方法不会
  *
+ *
+ * 线程池的设计：加入队列的设计，是为了避免多线程执行时全局锁，当允许的线程数大于核心线程数的后，加入队列不需要全局锁，
+ *
  * 对于线程池、包括线程的异常处理推荐一下方式:
  * 1： 直接try/catch
  * 2： 线程直接重写uncaughtException
  * 3： 也可以直接重写protected void afterExecute(Runnable r, Throwable t) { }方法
+ *
+ * 一般而言:CPU密集型任务应配置尽可能小的线程，如配置N(cpu数)+1个线程的线程池。
+ *         IO密集型任务应尽可能配置N(cpu数)*2个线程的线程池
+ *
  */
 public class ThreadPoolExecutorDemo {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         MyThreadPoolExecutor executor = new MyThreadPoolExecutor(5,
                 10, 5, TimeUnit.SECONDS,
                 new LinkedBlockingDeque<>(5),new ThreadPoolExecutor.AbortPolicy());
+
+        PriorityBlockingQueue priorityBlockingQueue = new PriorityBlockingQueue();
 
         System.out.println(Thread.currentThread().getName()+"主线程");
 
@@ -43,25 +53,27 @@ public class ThreadPoolExecutorDemo {
             for (int i = 0; i < 30; i++) {
 
                 int finalI = i;
-                /*executor.submit(() -> {
+                executor.submit(() -> {
                     Thread.sleep(500);
                     if (finalI == 22) {
                         int i1 = finalI / 0;
                     }
                     System.out.println(Thread.currentThread().getName() + "这是个线程池");
                     return "哈哈";
-                });*/
+                });
 
                 executor.execute(() -> {
                     try {
-                        Thread.sleep(500);
+                        if (finalI != 7) {
+                            Thread.sleep(1000);
+                        }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     if (finalI == 7) {
                         int i1 = finalI / 0;
                     }
-                    System.out.println(Thread.currentThread().getName() + "这是个线程池");
+                    System.out.println(Thread.currentThread().getName() + finalI+"这是个线程池");
                     //return "哈哈";
                 });
 
@@ -77,6 +89,12 @@ public class ThreadPoolExecutorDemo {
         } catch (RejectedExecutionException ex) {
             System.out.println(ex.getMessage());
         }
+
+
+        Thread.sleep(4000);
+
+        executor.shutdown(); //优雅关闭
+        List<Runnable> runnables = executor.shutdownNow();//会返回未执行的任务
 
         executor.terminated();
     }

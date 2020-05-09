@@ -34,14 +34,18 @@ public class InterProcessMutexTest {
     private static CuratorFramework client=null;
 
     public static void main(String[] args) {
+
         CuratorBase base=new CuratorBase();
         client=base.curatorClient();
         client.start();
-        //可重入非公平互斥锁
+
+        //可重入公平互斥(独占)锁
         InterProcessMutex lock=new InterProcessMutex(client,"/lock");
+
         for (int i = 0; i < 10; i++) {
             new Thread(new ThreadTest(i,lock)).start();
         }
+
     }
 
     private static class ThreadTest implements Runnable {
@@ -57,7 +61,9 @@ public class InterProcessMutexTest {
         public void run() {
             try {
                 System.out.println("第" + threadFlag + "线程开始获取锁");
+
                 haslock=lock.acquire(30000, TimeUnit.MILLISECONDS);
+
                 if(haslock) {
                     System.out.println("第" + threadFlag + "线程获取到了锁");
                 }

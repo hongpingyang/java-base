@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.LongAdder;
 public class LongAdderDemo {
 
     //LongAdder集成自Striped64，维护了一组Cell类型的计算单元，
-    // 每个线程会分配各种的计算单元进行计算，减少了竞争。
+    // 每个线程会分配一个的计算单元进行计算，减少了竞争。
     private static LongAdder longAdder = new LongAdder();
     private static Long  num=0L;
     //atomic的缺点是线程通过CAS进行更新操作，线程争用较多的话会导致效率较低。

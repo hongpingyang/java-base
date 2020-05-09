@@ -133,6 +133,7 @@ public class RabbitMqTest {
         for (int i = 0; i < 20; i++) {
 
             String message = "Hello World! "+i;
+            //默认的交换机
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
             System.out.println(" [x] Sent '" + message + "'");
         }
