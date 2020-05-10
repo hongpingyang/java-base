@@ -2124,9 +2124,9 @@ public abstract class AbstractQueuedSynchronizer_Source
                 if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)
                     break;
             }
-            //被打断了 或者 被唤醒了且已经到CLH尾部了
+            //被打断了 或者 被唤醒了且已经到CLH尾部了  Condition的signal->transferForSignal->加入到CLH队列
 
-            // acquireQueued尝试CAS获取锁，必须获取到锁才能继续执行
+            // acquireQueued尝试CAS获取锁，去竞争吧，下面的必须获取到锁才能继续执行
             if (acquireQueued(node, savedState) && interruptMode != THROW_IE)
                 interruptMode = REINTERRUPT;
             if (node.nextWaiter != null) // clean up if cancelled
