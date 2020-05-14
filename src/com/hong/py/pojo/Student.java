@@ -16,7 +16,7 @@ package com.hong.py.pojo;
  * <p>
  * Copyright © 2019 hongpy Technologies Inc. All Rights Reserved
  **/
-public class Student implements Cloneable {
+public class Student implements IStudent,Cloneable {
     private String name;
     private Integer age;
 

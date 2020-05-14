@@ -6,7 +6,7 @@ package com.hong.py.pojo;
  * description:
  * life for code
  */
-public class JuniorStudent extends Student implements Comparable<JuniorStudent> {
+public class JuniorStudent extends Student implements IStudent,Comparable<JuniorStudent> {
 
     @Override
     public int compareTo(JuniorStudent o) {
