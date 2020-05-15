@@ -1,5 +1,7 @@
 package com.hong.py.java8;
 
+import java.io.File;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -34,6 +36,12 @@ public class ConsumerDemo {
         c.andThen(c).andThen(c).accept("hello world");
 
 
+
+        BiConsumer<String,Integer> biConsumer= (String str,Integer integer)-> System.out.println(str+":"+integer);
+        //使用类型推断
+        BiConsumer<String,Integer> biConsumer1= (str,integer)-> System.out.println(str+":"+integer);
+        biConsumer.accept("hello 洪大洋", 18);
+
         //类似于C#的Func
         Function<String,String> function= str->
         {
@@ -43,5 +51,14 @@ public class ConsumerDemo {
 
         System.out.println(function.apply("冯小刚："));
 
+
+
+
+
+
+
+        File[] files = new File(".").listFiles(File::isHidden);
+
     }
+
 }
