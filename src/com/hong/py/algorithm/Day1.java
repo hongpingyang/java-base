@@ -38,7 +38,6 @@ import java.util.Map;
  *   第 1 个位置（i=1）上的数字是2，2能被 i（i=1）整除
  *   第 2 个位置（i=2）上的数字是1，i（i=2）能被 1 整除
  *
- *
  **/
 public class Day1 {
 
