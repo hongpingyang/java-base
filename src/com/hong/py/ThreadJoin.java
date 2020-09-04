@@ -16,7 +16,7 @@ package com.hong.py;
  * <p>
  * Copyright © 2020 hongpy Technologies Inc. All Rights Reserved
  **/
-public class ThreadJoin {
+public class ThreadJoin extends Thread implements Runnable {
 
     public static void main(String[] args) {
 
@@ -25,6 +25,7 @@ public class ThreadJoin {
 
         System.out.println("主线程开始执行");
         thread.start();
+        thread.run(); //调用线程执行，根本没有开启线程
         try {
             thread.join(); //让thread先执行，当前线程等待。
         } catch (InterruptedException e) {
@@ -35,6 +36,11 @@ public class ThreadJoin {
 
     }
 
+    @Override
+    public void run() {
+        System.out.println("");
+        super.run();
+    }
 }
 
 

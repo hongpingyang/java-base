@@ -1,5 +1,7 @@
 package com.hong.py.sugar;
 
+import com.hong.py.pojo.Student;
+
 /**
  * 文件描述
  *
@@ -41,27 +43,37 @@ public class EnumDemo {
 
     public static void main(String[] args) {
         SeflEnumDemo spring = SeflEnumDemo.SPRING;
-        System.out.println(spring.value);
+        System.out.println(spring.name+":"+spring.value);
     }
 
 
+    /**
+     * enum默认是实现了ENUM的子类，所以不能继续实现其它的类，可以实现接口。
+     */
+    public enum SeflEnumDemo  {
+
+    SPRING("春天",1),
+
+    SUMMER("夏天",2),
+
+    AUTUMN("秋天",3),
+
+    WINTER("冬天",4);
 
 
-    public enum SeflEnumDemo{
-
-    SPRING(1),
-
-    SUMMER(2),
-
-    AUTUMN(3),
-
-    WINTER(4);
-
+    private String name;
     private int value;
 
-        SeflEnumDemo(int value) {
+
+    SeflEnumDemo(String name,int value) {
+        this.name=name;
         this.value = value;
     }
+
+    public String getName() {
+        return name;
+    }
+
 
     public int getValue() {
         return this.value;

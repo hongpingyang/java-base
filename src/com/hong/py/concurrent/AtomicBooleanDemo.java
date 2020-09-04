@@ -24,7 +24,7 @@ public class AtomicBooleanDemo {
 
     public static void main(String[] args) {
 
-        //内部复制了一份，不影响原有的
+        //内部复制了一份数组，不影响原有的
         AtomicIntegerArray atomicIntegerArray=new AtomicIntegerArray(arrays);
         boolean b = atomicIntegerArray.compareAndSet(1, 1, 5);
 

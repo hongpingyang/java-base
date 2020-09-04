@@ -34,6 +34,6 @@ public class HelloJob implements Job {
     //也可以自己定义方法，此时需要jobdetail调用时用targetMethod指定
     public void doHandle()
     {
-
+        //Thread.currentThread().getContextClassLoader().loadClass()
     }
 }

@@ -1178,6 +1178,9 @@ public class ScheduledThreadPoolExecutor_Source
                                 //等待完超时时间继续循环去获取
                                 available.awaitNanos(delay);
                             } finally {
+                                // 如果leader线程还是当前线程，重置它用于下一次循环。
+                                // 等待available条件时，锁可能被其他线程占用从而导致
+                                // leader线程被改变，所以要检查
                                 if (leader == thisThread)
                                     //leader 置为null
                                     leader = null;

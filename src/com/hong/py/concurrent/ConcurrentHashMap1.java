@@ -274,21 +274,21 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * constraints.  Nodes with negative hash fields are specially
      * handled or ignored in map methods.
      *
-     * Insertion (via put or its variants) of the first node in an
+     * Insertion (via put or its variants) of the first nextNode in an
      * empty bin is performed by just CASing it to the bin.  This is
      * by far the most common case for put operations under most
      * key/hash distributions.  Other update operations (insert,
      * delete, and replace) require locks.  We do not want to waste
      * the space required to associate a distinct lock object with
-     * each bin, so instead use the first node of a bin list itself as
+     * each bin, so instead use the first nextNode of a bin list itself as
      * a lock. Locking support for these locks relies on builtin
      * "synchronized" monitors.
      *
-     * Using the first node of a list as a lock does not by itself
-     * suffice though: When a node is locked, any update must first
-     * validate that it is still the first node after locking it, and
+     * Using the first nextNode of a list as a lock does not by itself
+     * suffice though: When a nextNode is locked, any update must first
+     * validate that it is still the first nextNode after locking it, and
      * retry if not. Because new nodes are always appended to lists,
-     * once a node is first in a bin, it remains first until deleted
+     * once a nextNode is first in a bin, it remains first until deleted
      * or the bin becomes invalidated (upon resizing).
      *
      * The main disadvantage of per-bin locks is that other update
@@ -351,16 +351,16 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * sizeCtl ensures that resizings do not overlap. Because we are
      * using power-of-two expansion, the elements from each bin must
      * either stay at same index, or move with a power of two
-     * offset. We eliminate unnecessary node creation by catching
+     * offset. We eliminate unnecessary nextNode creation by catching
      * cases where old nodes can be reused because their next fields
      * won't change.  On average, only about one-sixth of them need
      * cloning when a table doubles. The nodes they replace will be
      * garbage collectable as soon as they are no longer referenced by
      * any reader thread that may be in the midst of concurrently
      * traversing table.  Upon transfer, the old table bin contains
-     * only a special forwarding node (with hash field "MOVED") that
+     * only a special forwarding nextNode (with hash field "MOVED") that
      * contains the next table as its key. On encountering a
-     * forwarding node, access and update operations restart, using
+     * forwarding nextNode, access and update operations restart, using
      * the new table.
      *
      * Each bin transfer requires its bin lock, which can stall
@@ -371,14 +371,14 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * accessible bins in both the old and new table are usable by any
      * traversal.  This is arranged in part by proceeding from the
      * last bin (table.length - 1) up towards the first.  Upon seeing
-     * a forwarding node, traversals (see class Traverser) arrange to
+     * a forwarding nextNode, traversals (see class Traverser) arrange to
      * move to the new table without revisiting nodes.  To ensure that
      * no intervening nodes are skipped even when moved out of order,
      * a stack (see class TableStack) is created on first encounter of
-     * a forwarding node during a traversal, to maintain its place if
+     * a forwarding nextNode during a traversal, to maintain its place if
      * later processing the current table. The need for these
      * save/restore mechanics is relatively rare, but when one
-     * forwarding node is encountered, typically many more will be.
+     * forwarding nextNode is encountered, typically many more will be.
      * So Traversers use a simple caching scheme to avoid creating so
      * many new TableStack nodes. (Thanks to Peter Levart for
      * suggesting use of a stack here.)
@@ -416,7 +416,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * elements that are Comparable but not necessarily Comparable for
      * the same T, so we cannot invoke compareTo among them. To handle
      * this, the tree is ordered primarily by hash value, then by
-     * Comparable.compareTo order if applicable.  On lookup at a node,
+     * Comparable.compareTo order if applicable.  On lookup at a nextNode,
      * if elements are not comparable or compare as 0 then both left
      * and right children may need to be searched in the case of tied
      * hash values. (This corresponds to the full list search that
@@ -432,7 +432,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * TreeBins also require an additional locking mechanism.  While
      * list traversal is always possible by readers even during
      * updates, tree traversal is not, mainly because of tree-rotations
-     * that may change the root node and/or its linkages.  TreeBins
+     * that may change the root nextNode and/or its linkages.  TreeBins
      * include a simple read-write lock mechanism parasitic on the
      * main bin-synchronization strategy: Structural adjustments
      * associated with an insertion or removal are already bin-locked
@@ -561,7 +561,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
     static final int MOVED     = -1; // hash for forwarding nodes
     static final int TREEBIN   = -2; // hash for roots of trees
     static final int RESERVED  = -3; // hash for transient reservations
-    static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash
+    static final int HASH_BITS = 0x7fffffff; // usable bits of normal nextNode hash
 
     /** Number of CPUS, to place bounds on some sizings */
     static final int NCPU = Runtime.getRuntime().availableProcessors();
@@ -876,7 +876,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * {@inheritDoc}
      */
     public int size() {
-        long n = sumCount();
+        long n = sumCount(); //统计CountCell
         return ((n < 0L) ? 0 :
                 (n > (long)Integer.MAX_VALUE) ? Integer.MAX_VALUE :
                         (int)n);
@@ -899,22 +899,27 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * {@code null}.  (There can be at most one such mapping.)
      *
      * @throws NullPointerException if the specified key is null
+     * get方法没有加锁
      */
     public V get(Object key) {
         Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
+
         int h = spread(key.hashCode());
+
         if ((tab = table) != null && (n = tab.length) > 0 &&
                 (e = tabAt(tab, (n - 1) & h)) != null) {
             if ((eh = e.hash) == h) {
                 if ((ek = e.key) == key || (ek != null && key.equals(ek)))
-                    return e.val;
+                    return e.val; //val是volatile
             }
             else if (eh < 0)
                 return (p = e.find(h, key)) != null ? p.val : null;
+            //遍历查找
             while ((e = e.next) != null) {
+
                 if (e.hash == h &&
                         ((ek = e.key) == key || (ek != null && key.equals(ek))))
-                    return e.val;
+                    return e.val; //val是volatile
             }
         }
         return null;
@@ -979,8 +984,9 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
     final V putVal(K key, V value, boolean onlyIfAbsent) {
         //这就是为啥不能为null的原因
         if (key == null || value == null) throw new NullPointerException();
-        //计算hash值
+        //对hashcode再次计算hash值
         int hash = spread(key.hashCode());
+        //计算桶的位置  通过该hash值与上整个桶的长度 (n - 1) & hash)
         int binCount = 0;
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
@@ -1000,7 +1006,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
             else {
                 // 如果 hash 冲突了，且 hash 值不为 -1
                 V oldVal = null;
-                synchronized (f) { //加锁操作。
+                synchronized (f) { //加锁操作。 只对桶位置的节点加锁。
                     if (tabAt(tab, i) == f) {
 
                         if (fh >= 0) { //???
@@ -1084,7 +1090,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
 
     /**
      * Implementation for the four public remove/replace methods:
-     * Replaces node value with v, conditional upon match of cv if
+     * Replaces nextNode value with v, conditional upon match of cv if
      * non-null.  If resulting value is null, delete.
      */
     final V replaceNode(Object key, V value, Object cv) {
@@ -2143,7 +2149,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
     /* ---------------- Special Nodes -------------- */
 
     /**
-     * A node inserted at head of bins during transfer operations.
+     * A nextNode inserted at head of bins during transfer operations.
      */
     static final class ForwardingNode<K,V> extends Node<K,V> {
         final Node<K,V>[] nextTable;
@@ -2183,7 +2189,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
     }
 
     /**
-     * A place-holder node used in computeIfAbsent and compute
+     * A place-holder nextNode used in computeIfAbsent and compute
      */
     static final class ReservationNode<K,V> extends Node<K,V> {
         ReservationNode() {
@@ -2910,7 +2916,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Returns matching node or null if none. Tries to search
+         * Returns matching nextNode or null if none. Tries to search
          * using tree comparisons from root, but continues linear
          * search when lock not available.
          */
@@ -2944,7 +2950,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Finds or adds a node.
+         * Finds or adds a nextNode.
          * @return null if added
          */
         final TreeNode<K,V> putTreeVal(int h, K k, V v) {
@@ -3005,9 +3011,9 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Removes the given node, that must be present before this
+         * Removes the given nextNode, that must be present before this
          * call.  This is messier than typical red-black deletion code
-         * because we cannot swap the contents of an interior node
+         * because we cannot swap the contents of an interior nextNode
          * with a leaf successor that is pinned by "next" pointers
          * that are accessible independently of lock. So instead we
          * swap the tree linkages.
@@ -3353,7 +3359,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
      * Encapsulates traversal for methods such as containsValue; also
      * serves as a base class for other iterators and spliterators.
      *
-     * Method advance visits once each still-valid node that was
+     * Method advance visits once each still-valid nextNode that was
      * reachable upon iterator construction. It might miss some that
      * were added to a bin after the bin was visited, which is OK wrt
      * consistency guarantees. Maintaining this property in the face
@@ -3392,7 +3398,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Advances if possible, returning next valid node, or null if none.
+         * Advances if possible, returning next valid nextNode, or null if none.
          */
         final Node<K,V> advance() {
             Node<K,V> e;
@@ -3430,7 +3436,7 @@ public class ConcurrentHashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Saves traversal state upon encountering a forwarding node.
+         * Saves traversal state upon encountering a forwarding nextNode.
          */
         private void pushState(Node<K,V>[] t, int i, int n) {
             TableStack<K,V> s = spare;  // reuse if possible

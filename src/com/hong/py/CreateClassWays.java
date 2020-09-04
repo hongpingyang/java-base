@@ -1,5 +1,6 @@
 package com.hong.py;
 
+import com.hong.py.pojo.Person;
 import com.hong.py.pojo.Student;
 
 import java.lang.reflect.Constructor;
@@ -37,9 +38,9 @@ import java.lang.reflect.InvocationTargetException;
 public class CreateClassWays {
 
     public static void main(String[] args) {
-        way1();
+       /* way1();
         way2();
-        way3();
+        way3();*/
         way4();
     }
 
@@ -100,9 +101,30 @@ public class CreateClassWays {
     public static void way4()
     {
         Student student=new Student("hongdadiao",30);
+        Person person = new Person();
+        person.setRegion("这是个上海人");
+        person.setCardId("thi is card no");
+        student.setPerson(person);
         try {
-            Object clone = (Student)student.clone();
-            System.out.println(clone);
+
+            Student clone = (Student)student.clone();
+            //(clone).setName("this is clone name");
+            //(clone).setAge(18);
+
+            clone.getPerson().setRegion("这是个clone人");
+            clone.getPerson().setCardId("thi is card no");
+
+            System.out.println(clone==student);
+            System.out.println(student.getName());
+            System.out.println(clone.getName());
+            System.out.println(student.getAge());
+            System.out.println(clone.getAge());
+
+            //里面的Person是同一个，修改会影响到原来的克隆对象
+            //只会复制对象的值类型，而不会复制对象的引用类型
+            System.out.println(student.getPerson().getRegion());
+            System.out.println(clone.getPerson().getRegion());
+
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }

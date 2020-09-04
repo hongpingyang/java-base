@@ -33,7 +33,7 @@ public class CuratorBase {
     private static final int CONNECTION_TIMEOUT = 3 * 1000;
 
     //ZooKeeper服务地址
-    private static final String CONNECT_ADDR = "10.20.29.203:2181";
+    private static final String CONNECT_ADDR = "192.168.1.215:2181";
 
     //创建连接实体
     private  CuratorFramework client=null;
@@ -57,10 +57,10 @@ public class CuratorBase {
         System.out.println(base.client.getState());
         System.out.println(base.isConnected());
 
-        base.createPersistent("/curator1");
-        base.createPersistent("/curator1/1");
-        base.createPersistent("/curator1/2");
-        base.createPersistent("/curator1/3");
+        //base.createPersistent("/curator1");
+        //base.createPersistent("/curator1/1");
+        //base.createPersistent("/curator1/2");
+        //base.createPersistent("/curator1/3");
 
         base.createEphemeral("/curatorEphemeral");
 
@@ -69,21 +69,22 @@ public class CuratorBase {
             System.out.println(path);
         }*/
 
-        base.setData("/curator1", "this is a test");
+        //base.setData("/curator1", "this is a test");
 
         base.setData("/curatorEphemeral", "this is a testcuratorEphemeral");
 
-        base.setData("/curator1/1", "this is a test1");
-        base.setData("/curator1/2", "this is a test2");
-        base.setData("/curator1/3", "this is a test3");
+        //base.setData("/curator1/1", "this is a test1");
+
+        //base.setData("/curator1/2", "this is a test2");
+        //base.setData("/curator1/3", "this is a test3");
 
 
-        Object data = base.getData("/curator");
-        System.out.println(data.toString());
+        byte[] data = base.getData("/curatorEphemeral");
+        System.out.println(new String(data));
 
-        base.setData("/curator1/3", "this is a testfor 2");
+        //base.setData("/curator1/3", "this is a testfor 2");
 
-        base.delete("/curator1/2");
+        //base.delete("/curator1/2");
 
     }
 
@@ -193,9 +194,10 @@ public class CuratorBase {
     }
 
     //获取某个节点数据
-    public Object getData(String path) {
+    public byte[] getData(String path) {
         try {
-            return client.getData().forPath(path);
+            byte[] bytes = client.getData().forPath(path);
+            return bytes;
         } catch (Exception e) {
             throw new IllegalStateException(e.getMessage(), e);
         }

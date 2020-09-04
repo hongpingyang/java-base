@@ -31,18 +31,39 @@ public class CollectionTest {
 
         linkedBooks.forEach(p-> System.out.println(p));
 
+        ArrayList<String> list = new ArrayList<>();
+        list.add("曹操");
+        list.add("刘备");
+        list.add("孙权");
+        list.add("诸葛亮");
+        list.add("司马懿");
+        list.add("吕布");
+
+
         Iterator iterator = books.iterator();
         while (iterator.hasNext())
         {
-
-            String book= (String) iterator.next();
+            String book= (String) iterator.next(); //只能向后遍历
 
             if(book.equals("高数"))
             {
                 iterator.remove();
             }
-
         }
+
+        ListIterator<String> stringListIterator = list.listIterator();
+
+        while (stringListIterator.hasNext()) {
+            String book=stringListIterator.next();
+            System.out.println(book);
+        }
+
+        while (stringListIterator.hasPrevious()) {
+            String book=stringListIterator.previous();
+            System.out.println(book);
+        }
+
+
 
         System.out.println(books);
         Iterator iterator1 = books.iterator();

@@ -1243,7 +1243,7 @@ public class ThreadPoolExecutor_Source extends AbstractExecutorService {
                     } catch (Throwable x) {
                         thrown = x; throw new Error(x);
                     } finally {
-                        //后置事件
+                        //后置事件 处理异常
                         afterExecute(task, thrown);
                     }
                 } finally {

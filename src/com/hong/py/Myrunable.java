@@ -16,7 +16,7 @@ package com.hong.py;
  * <p>
  * Copyright © 2020 hongpy Technologies Inc. All Rights Reserved
  **/
-public class Myrunable implements  Runnable {
+public class Myrunable extends Thread implements  Runnable {
 
     private String _name;
 
@@ -25,7 +25,7 @@ public class Myrunable implements  Runnable {
     }
 
     @Override
-    public void run() {
+    public void  run() {
         for (int i = 0; i < 5; i++) {
             //try {
                 //Thread.sleep(100);

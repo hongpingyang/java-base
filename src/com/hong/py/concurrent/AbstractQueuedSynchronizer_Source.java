@@ -326,16 +326,16 @@ public abstract class AbstractQueuedSynchronizer_Source
     protected AbstractQueuedSynchronizer_Source() { }
 
     /**
-     * Wait queue node class.
+     * Wait queue nextNode class.
      *
      * <p>The wait queue is a variant of a "CLH" (Craig, Landin, and
      * Hagersten) lock queue. CLH locks are normally used for
      * spinlocks.  We instead use them for blocking synchronizers, but
      * use the same basic tactic of holding some of the control
-     * information about a thread in the predecessor of its node.  A
-     * "status" field in each node keeps track of whether a thread
-     * should block.  A node is signalled when its predecessor
-     * releases.  Each node of the queue otherwise serves as a
+     * information about a thread in the predecessor of its nextNode.  A
+     * "status" field in each nextNode keeps track of whether a thread
+     * should block.  A nextNode is signalled when its predecessor
+     * releases.  Each nextNode of the queue otherwise serves as a
      * specific-notification-style monitor holding a single waiting
      * thread. The status field does NOT control whether threads are
      * granted locks etc though.  A thread may try to acquire if it is
@@ -360,44 +360,44 @@ public abstract class AbstractQueuedSynchronizer_Source
      * and interrupts.
      *
      * <p>The "prev" links (not used in original CLH locks), are mainly
-     * needed to handle cancellation. If a node is cancelled, its
+     * needed to handle cancellation. If a nextNode is cancelled, its
      * successor is (normally) relinked to a non-cancelled
      * predecessor. For explanation of similar mechanics in the case
      * of spin locks, see the papers by Scott and Scherer at
      * http://www.cs.rochester.edu/u/scott/synchronization/
      *
      * <p>We also use "next" links to implement blocking mechanics.
-     * The thread id for each node is kept in its own node, so a
-     * predecessor signals the next node to wake up by traversing
+     * The thread id for each nextNode is kept in its own nextNode, so a
+     * predecessor signals the next nextNode to wake up by traversing
      * next link to determine which thread it is.  Determination of
      * successor must avoid races with newly queued nodes to set
      * the "next" fields of their predecessors.  This is solved
      * when necessary by checking backwards from the atomically
-     * updated "tail" when a node's successor appears to be null.
+     * updated "tail" when a nextNode's successor appears to be null.
      * (Or, said differently, the next-links are an optimization
      * so that we don't usually need a backward scan.)
      *
      * <p>Cancellation introduces some conservatism to the basic
      * algorithms.  Since we must poll for cancellation of other
-     * nodes, we can miss noticing whether a cancelled node is
+     * nodes, we can miss noticing whether a cancelled nextNode is
      * ahead or behind us. This is dealt with by always unparking
      * successors upon cancellation, allowing them to stabilize on
      * a new predecessor, unless we can identify an uncancelled
      * predecessor who will carry this responsibility.
      *
-     * <p>CLH queues need a dummy header node to get started. But
+     * <p>CLH queues need a dummy header nextNode to get started. But
      * we don't create them on construction, because it would be wasted
-     * effort if there is never contention. Instead, the node
+     * effort if there is never contention. Instead, the nextNode
      * is constructed and head and tail pointers are set upon first
      * contention.
      *
      * <p>Threads waiting on Conditions use the same nodes, but
      * use an additional link. Conditions only need to link nodes
      * in simple (non-concurrent) linked queues because they are
-     * only accessed when exclusively held.  Upon await, a node is
-     * inserted into a condition queue.  Upon signal, the node is
+     * only accessed when exclusively held.  Upon await, a nextNode is
+     * inserted into a condition queue.  Upon signal, the nextNode is
      * transferred to the main queue.  A special value of status
-     * field is used to mark which queue a node is on.
+     * field is used to mark which queue a nextNode is on.
      *
      * <p>Thanks go to Dave Dice, Mark Moir, Victor Luchangco, Bill
      * Scherer and Michael Scott, along with members of JSR-166
@@ -405,10 +405,10 @@ public abstract class AbstractQueuedSynchronizer_Source
      * on the design of this class.
      */
     static final class Node {
-        /** Marker to indicate a node is waiting in shared mode */
+        /** Marker to indicate a nextNode is waiting in shared mode */
         //共享的都是这一个
         static final Node SHARED = new Node();
-        /** Marker to indicate a node is waiting in exclusive mode */
+        /** Marker to indicate a nextNode is waiting in exclusive mode */
         //独占
         static final Node EXCLUSIVE = null;
 
@@ -429,31 +429,31 @@ public abstract class AbstractQueuedSynchronizer_Source
 
         /**
          * Status field, taking on only the values:
-         *   SIGNAL:     The successor of this node is (or will soon be)
-         *               blocked (via park), so the current node must
+         *   SIGNAL:     The successor of this nextNode is (or will soon be)
+         *               blocked (via park), so the current nextNode must
          *               unpark its successor when it releases or
          *               cancels. To avoid races, acquire methods must
          *               first indicate they need a signal,
          *               then retry the atomic acquire, and then,
          *               on failure, block.
-         *   CANCELLED:  This node is cancelled due to timeout or interrupt.
+         *   CANCELLED:  This nextNode is cancelled due to timeout or interrupt.
          *               Nodes never leave this state. In particular,
-         *               a thread with cancelled node never again blocks.
-         *   CONDITION:  This node is currently on a condition queue.
-         *               It will not be used as a sync queue node
+         *               a thread with cancelled nextNode never again blocks.
+         *   CONDITION:  This nextNode is currently on a condition queue.
+         *               It will not be used as a sync queue nextNode
          *               until transferred, at which time the status
          *               will be set to 0. (Use of this value here has
          *               nothing to do with the other uses of the
          *               field, but simplifies mechanics.)
          *   PROPAGATE:  A releaseShared should be propagated to other
-         *               nodes. This is set (for head node only) in
+         *               nodes. This is set (for head nextNode only) in
          *               doReleaseShared to ensure propagation
          *               continues, even if other operations have
          *               since intervened.
          *   0:          None of the above
          *
          * The values are arranged numerically to simplify use.
-         * Non-negative values mean that a node doesn't need to
+         * Non-negative values mean that a nextNode doesn't need to
          * signal. So, most code doesn't need to check for particular
          * values, just for sign.
          *
@@ -464,41 +464,41 @@ public abstract class AbstractQueuedSynchronizer_Source
         volatile int waitStatus;
 
         /**
-         * Link to predecessor node that current node/thread relies on
+         * Link to predecessor nextNode that current nextNode/thread relies on
          * for checking waitStatus. Assigned during enqueuing, and nulled
          * out (for sake of GC) only upon dequeuing.  Also, upon
          * cancellation of a predecessor, we short-circuit while
          * finding a non-cancelled one, which will always exist
-         * because the head node is never cancelled: A node becomes
+         * because the head nextNode is never cancelled: A nextNode becomes
          * head only as a result of successful acquire. A
          * cancelled thread never succeeds in acquiring, and a thread only
-         * cancels itself, not any other node.
+         * cancels itself, not any other nextNode.
          */
         volatile Node prev;
 
         /**
-         * Link to the successor node that the current node/thread
+         * Link to the successor nextNode that the current nextNode/thread
          * unparks upon release. Assigned during enqueuing, adjusted
          * when bypassing cancelled predecessors, and nulled out (for
          * sake of GC) when dequeued.  The enq operation does not
          * assign next field of a predecessor until after attachment,
          * so seeing a null next field does not necessarily mean that
-         * node is at end of queue. However, if a next field appears
+         * nextNode is at end of queue. However, if a next field appears
          * to be null, we can scan prev's from the tail to
          * double-check.  The next field of cancelled nodes is set to
-         * point to the node itself instead of null, to make life
+         * point to the nextNode itself instead of null, to make life
          * easier for isOnSyncQueue.
          */
         volatile Node next;
 
         /**
-         * The thread that enqueued this node.  Initialized on
+         * The thread that enqueued this nextNode.  Initialized on
          * construction and nulled out after use.
          */
         volatile Thread thread;
 
         /**
-         * Link to next node waiting on condition, or the special
+         * Link to next nextNode waiting on condition, or the special
          * value SHARED.  Because condition queues are accessed only
          * when holding in exclusive mode, we just need a simple
          * linked queue to hold nodes while they are waiting on
@@ -510,18 +510,18 @@ public abstract class AbstractQueuedSynchronizer_Source
         Node nextWaiter;
 
         /**
-         * Returns true if node is waiting in shared mode.
+         * Returns true if nextNode is waiting in shared mode.
          */
         final boolean isShared() {
             return nextWaiter == SHARED;
         }
 
         /**
-         * Returns previous node, or throws NullPointerException if null.
+         * Returns previous nextNode, or throws NullPointerException if null.
          * Use when predecessor cannot be null.  The null check could
          * be elided, but is present to help the VM.
          *
-         * @return the predecessor of this node
+         * @return the predecessor of this nextNode
          */
         final Node predecessor() throws NullPointerException {
             Node p = prev;
@@ -555,7 +555,7 @@ public abstract class AbstractQueuedSynchronizer_Source
 
     /**
      * Tail of the wait queue, lazily initialized.  Modified only via
-     * method enq to add new wait node.
+     * method enq to add new wait nextNode.
      */
     private transient volatile Node tail;
 
@@ -608,9 +608,9 @@ public abstract class AbstractQueuedSynchronizer_Source
     static final long spinForTimeoutThreshold = 1000L;
 
     /**
-     * Inserts node into queue, initializing if necessary. See picture above.
-     * @param node the node to insert
-     * @return node's predecessor
+     * Inserts nextNode into queue, initializing if necessary. See picture above.
+     * @param node the nextNode to insert
+     * @return nextNode's predecessor
      */
     private Node enq(final Node node) {
         for (;;) {
@@ -629,10 +629,10 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * Creates and enqueues node for current thread and given mode.
+     * Creates and enqueues nextNode for current thread and given mode.
      *
      * @param mode Node.EXCLUSIVE for exclusive, Node.SHARED for shared
-     * @return the new node
+     * @return the new nextNode
      */
     private Node addWaiter(Node mode) {
         Node node = new Node(Thread.currentThread(), mode);
@@ -650,11 +650,11 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * Sets head of queue to be node, thus dequeuing. Called only by
+     * Sets head of queue to be nextNode, thus dequeuing. Called only by
      * acquire methods.  Also nulls out unused fields for sake of GC
      * and to suppress unnecessary signals and traversals.
      *
-     * @param node the node
+     * @param node the nextNode
      */
     private void setHead(Node node) {
         head = node;
@@ -663,9 +663,9 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * Wakes up node's successor, if one exists.
+     * Wakes up nextNode's successor, if one exists.
      *
-     * @param node the node
+     * @param node the nextNode
      */
     private void unparkSuccessor(Node node) {
         /*
@@ -679,7 +679,7 @@ public abstract class AbstractQueuedSynchronizer_Source
 
         /*
          * Thread to unpark is held in successor, which is normally
-         * just the next node.  But if cancelled or apparently null,
+         * just the next nextNode.  But if cancelled or apparently null,
          * traverse backwards from tail to find the actual
          * non-cancelled successor.
          */
@@ -691,7 +691,7 @@ public abstract class AbstractQueuedSynchronizer_Source
                 if (t.waitStatus <= 0)
                     s = t;
         }
-        //node.next通知它
+        //nextNode.next通知它
         if (s != null)
             LockSupport.unpark(s.thread);
     }
@@ -708,7 +708,7 @@ public abstract class AbstractQueuedSynchronizer_Source
          * way of trying to unparkSuccessor of head if it needs
          * signal. But if it does not, status is set to PROPAGATE to
          * ensure that upon release, propagation continues.
-         * Additionally, we must loop in case a new node is added
+         * Additionally, we must loop in case a new nextNode is added
          * while we are doing this. Also, unlike other uses of
          * unparkSuccessor, we need to know if CAS to reset status
          * fails, if so rechecking.
@@ -738,21 +738,21 @@ public abstract class AbstractQueuedSynchronizer_Source
      * in shared mode, if so propagating if either propagate > 0 or
      * PROPAGATE status was set.
      *
-     * @param node the node
+     * @param node the nextNode
      * @param propagate the return value from a tryAcquireShared
      */
     private void setHeadAndPropagate(Node node, int propagate) {
         Node h = head; // Record old head for check below
         setHead(node);
         /*
-         * Try to signal next queued node if:
+         * Try to signal next queued nextNode if:
          *   Propagation was indicated by caller,
          *     or was recorded (as h.waitStatus either before
          *     or after setHead) by a previous operation
          *     (note: this uses sign-check of waitStatus because
          *      PROPAGATE status may transition to SIGNAL.)
          * and
-         *   The next node is waiting in shared mode,
+         *   The next nextNode is waiting in shared mode,
          *     or we don't know, because it appears null
          *
          * The conservatism in both of these checks may cause
@@ -774,12 +774,12 @@ public abstract class AbstractQueuedSynchronizer_Source
     /**
      * Cancels an ongoing attempt to acquire.
      *
-     * @param node the node
+     * @param node the nextNode
      *
      * 取消获取锁 置为CANCELLED
      */
     private void cancelAcquire(Node node) {
-        // Ignore if node doesn't exist
+        // Ignore if nextNode doesn't exist
         if (node == null)
             return;
 
@@ -790,7 +790,7 @@ public abstract class AbstractQueuedSynchronizer_Source
         while (pred.waitStatus > 0)
             node.prev = pred = pred.prev;
 
-        // predNext is the apparent node to unsplice. CASes below will
+        // predNext is the apparent nextNode to unsplice. CASes below will
         // fail if not, in which case, we lost race vs another cancel
         // or signal, so no further action is necessary.
         Node predNext = pred.next;
@@ -823,12 +823,12 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * Checks and updates status for a node that failed to acquire.
+     * Checks and updates status for a nextNode that failed to acquire.
      * Returns true if thread should block. This is the main signal
-     * control in all acquire loops.  Requires that pred == node.prev.
+     * control in all acquire loops.  Requires that pred == nextNode.prev.
      *
-     * @param pred node's predecessor holding status
-     * @param node the node
+     * @param pred nextNode's predecessor holding status
+     * @param node the nextNode
      * @return {@code true} if thread should block
      */
     private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
@@ -837,7 +837,7 @@ public abstract class AbstractQueuedSynchronizer_Source
         //如果是正在等待一个信号，那需要阻塞。
         if (ws == Node.SIGNAL)
             /*
-             * This node has already set status asking a release
+             * This nextNode has already set status asking a release
              * to signal it, so it can safely park.
              */
             return true;
@@ -895,7 +895,7 @@ public abstract class AbstractQueuedSynchronizer_Source
      * Acquires in exclusive uninterruptible mode for thread already in
      * queue. Used by condition wait methods as well as acquire.
      *
-     * @param node the node
+     * @param node the nextNode
      * @param arg the acquire argument
      * @return {@code true} if interrupted while waiting
      */
@@ -1459,7 +1459,7 @@ public abstract class AbstractQueuedSynchronizer_Source
      */
     private Thread fullGetFirstQueuedThread() {
         /*
-         * The first node is normally head.next. Try to get its
+         * The first nextNode is normally head.next. Try to get its
          * thread field, ensuring consistent reads: If thread
          * field is nulled out or s.prev is no longer head, then
          * some other thread(s) concurrently performed setHead in
@@ -1477,7 +1477,7 @@ public abstract class AbstractQueuedSynchronizer_Source
         /*
          * Head's next field might not have been set yet, or may have
          * been unset after setHead. So we must check to see if tail
-         * is actually first node. If not, we continue on, safely
+         * is actually first nextNode. If not, we continue on, safely
          * traversing from tail back to head to find first,
          * guaranteeing termination.
          */
@@ -1690,9 +1690,9 @@ public abstract class AbstractQueuedSynchronizer_Source
     // Internal support methods for Conditions
 
     /**
-     * Returns true if a node, always one that was initially placed on
+     * Returns true if a nextNode, always one that was initially placed on
      * a condition queue, is now waiting to reacquire on sync queue.
-     * @param node the node
+     * @param node the nextNode
      * @return true if is reacquiring
      */
     final boolean isOnSyncQueue(Node node) {
@@ -1701,7 +1701,7 @@ public abstract class AbstractQueuedSynchronizer_Source
         if (node.next != null) // If has successor, it must be on queue
             return true;
         /*
-         * node.prev can be non-null, but not yet on queue because
+         * nextNode.prev can be non-null, but not yet on queue because
          * the CAS to place it on queue can fail. So we have to
          * traverse from tail to make sure it actually made it.  It
          * will always be near the tail in calls to this method, and
@@ -1712,7 +1712,7 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * Returns true if node is on sync queue by searching backwards from tail.
+     * Returns true if nextNode is on sync queue by searching backwards from tail.
      * Called only when needed by isOnSyncQueue.
      * @return true if present
      */
@@ -1728,15 +1728,15 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * Transfers a node from a condition queue onto sync queue.
+     * Transfers a nextNode from a condition queue onto sync queue.
      * Returns true if successful.
-     * @param node the node
-     * @return true if successfully transferred (else the node was
+     * @param node the nextNode
+     * @return true if successfully transferred (else the nextNode was
      * cancelled before signal)
      */
     final boolean transferForSignal(Node node) {
         /*
-         * If cannot change waitStatus, the node has been cancelled.
+         * If cannot change waitStatus, the nextNode has been cancelled.
          */
         //CAS尝试把当前waitStatus改为0 如果失败了，doSignal会一直重试。够执着啊
         if (!compareAndSetWaitStatus(node, Node.CONDITION, 0))
@@ -1761,11 +1761,11 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * Transfers node, if necessary, to sync queue after a cancelled wait.
+     * Transfers nextNode, if necessary, to sync queue after a cancelled wait.
      * Returns true if thread was cancelled before being signalled.
      *
-     * @param node the node
-     * @return true if cancelled before the node was signalled
+     * @param node the nextNode
+     * @return true if cancelled before the nextNode was signalled
      */
     final boolean transferAfterCancelledWait(Node node) {
         if (compareAndSetWaitStatus(node, Node.CONDITION, 0)) {
@@ -1785,8 +1785,8 @@ public abstract class AbstractQueuedSynchronizer_Source
 
     /**
      * Invokes release with current state value; returns saved state.
-     * Cancels node and throws exception on failure.
-     * @param node the condition node for this wait
+     * Cancels nextNode and throws exception on failure.
+     * @param node the condition nextNode for this wait
      * @return previous sync state
      */
     final int fullyRelease(Node node) {
@@ -1900,9 +1900,9 @@ public abstract class AbstractQueuedSynchronizer_Source
      */
     public class ConditionObject implements Condition, java.io.Serializable {
         private static final long serialVersionUID = 1173984872572414699L;
-        /** First node of condition queue. */
+        /** First nextNode of condition queue. */
         private transient Node firstWaiter;
-        /** Last node of condition queue. */
+        /** Last nextNode of condition queue. */
         private transient Node lastWaiter;
 
         /**
@@ -1914,7 +1914,7 @@ public abstract class AbstractQueuedSynchronizer_Source
 
         /**
          * Adds a new waiter to wait queue.
-         * @return its new wait node
+         * @return its new wait nextNode
          */
         private Node addConditionWaiter() {
             Node t = lastWaiter;
@@ -1936,7 +1936,7 @@ public abstract class AbstractQueuedSynchronizer_Source
          * Removes and transfers nodes until hit non-cancelled one or
          * null. Split out from signal in part to encourage compilers
          * to inline the case of no waiters.
-         * @param first (non-null) the first node on condition queue
+         * @param first (non-null) the first nextNode on condition queue
          */
         private void doSignal(Node first) {
             do {
@@ -1953,7 +1953,7 @@ public abstract class AbstractQueuedSynchronizer_Source
 
         /**
          * Removes and transfers all nodes.
-         * @param first (non-null) the first node on condition queue
+         * @param first (non-null) the first nextNode on condition queue
          */
         private void doSignalAll(Node first) {
             lastWaiter = firstWaiter = null;
@@ -2388,7 +2388,7 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * CAS waitStatus field of a node.
+     * CAS waitStatus field of a nextNode.
      */
     private static final boolean compareAndSetWaitStatus(Node node,
                                                          int expect,
@@ -2398,7 +2398,7 @@ public abstract class AbstractQueuedSynchronizer_Source
     }
 
     /**
-     * CAS next field of a node.
+     * CAS next field of a nextNode.
      */
     private static final boolean compareAndSetNext(Node node,
                                                    Node expect,

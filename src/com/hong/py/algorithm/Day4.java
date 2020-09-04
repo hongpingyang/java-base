@@ -17,7 +17,7 @@ import javax.swing.tree.TreeNode;
  * @Version: 1.0
  * <p>
  * /**
- *  * Definition for a binary tree node.
+ *  * Definition for a binary tree nextNode.
  *  * public class TreeNode {
  *  *     int val;
  *  *     TreeNode left;

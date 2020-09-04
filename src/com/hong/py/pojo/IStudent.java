@@ -6,7 +6,7 @@ package com.hong.py.pojo;
  * description:
  * life for code
  */
-public interface IStudent {
+public interface IStudent<T> {
 
     Integer getAge();
 

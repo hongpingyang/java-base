@@ -1,5 +1,7 @@
 package com.hong.py.pojo;
 
+import java.util.Comparator;
+
 /**
  * 文件描述
  *
@@ -16,12 +18,17 @@ package com.hong.py.pojo;
  * <p>
  * Copyright © 2019 hongpy Technologies Inc. All Rights Reserved
  **/
-public class Student implements IStudent,Cloneable {
+public class Student extends Person implements IStudent,Cloneable,Comparable<Student>, Comparator<Student> {
+
     private String name;
     private Integer age;
-
+    private Person person;
     public Student() {
 
+    }
+
+    private Student(String name) {
+        this.name=name;
     }
 
     public Student(String name, int age) {
@@ -45,6 +52,30 @@ public class Student implements IStudent,Cloneable {
         this.age = age;
     }
 
+    private void setAge() {
+        this.age = 18;
+    }
+
+    public Person getPerson() {
+        return person;
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
+    }
+
+    /**
+     * 返回匿名类方法
+     * @return
+     */
+    public Runnable classWithAnonymousClass() {
+        return new Runnable() {
+            public void run() {
+            }
+        };
+    }
+
+
     @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -56,5 +87,15 @@ public class Student implements IStudent,Cloneable {
                 "name='" + name + '\'' +
                 ", age=" + age +
                 '}';
+    }
+
+    @Override
+    public int compareTo(Student o) {
+        return this.age-o.getAge();
+    }
+
+    @Override
+    public int compare(Student o1, Student o2) {
+        return 0;
     }
 }

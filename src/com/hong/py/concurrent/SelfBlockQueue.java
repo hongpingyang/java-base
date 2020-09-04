@@ -15,15 +15,16 @@ public class SelfBlockQueue {
 
     private static BlockQueue blockQueue = new BlockQueue(10);
 
+
     public static void main(String[] args) {
 
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 10; i++) {
             Thread thread = new Thread(() ->
             {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(1000); //也可以被打断
                     blockQueue.enQueue("生产的商品");
-                    System.out.println(Thread.currentThread().getName()+":生产了");
+
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -31,17 +32,17 @@ public class SelfBlockQueue {
             thread.start();
         }
 
-        for (int i = 0; i < 30; i++) {
-            Thread thread = new Thread(() ->
+        for (int i = 0; i < 10; i++) {
+            Thread thread1 = new Thread(() ->
             {
                 try {
                     Object o = blockQueue.deQueue();
-                    System.out.println(Thread.currentThread().getName()+":获取的"+o.toString());
+
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             });
-            thread.start();
+            thread1.start();
         }
     }
 
@@ -57,21 +58,26 @@ public class SelfBlockQueue {
         }
 
         public synchronized void enQueue(Object item) throws InterruptedException {
-            while (limit == queue.size()) {
-                wait();
+            synchronized (this) {
+                while (limit == queue.size()) {
+                    wait(); //可以被打断
+                }
+                queue.add(item);
+                System.out.println(Thread.currentThread().getName()+":生产了");
+                notify();
             }
-
-            queue.add(item);
-            notify();
         }
 
         public synchronized Object deQueue() throws InterruptedException {
-            while (queue.size() == 0) {
-                wait();
+            synchronized (this){
+                while (queue.size() == 0) {
+                    wait();
+                }
+                Object remove = queue.remove(0);
+                System.out.println(Thread.currentThread().getName()+":获取的");
+                notify();
+                return remove;
             }
-            Object remove = queue.remove(0);
-            notify();
-            return remove;
         }
     }
 

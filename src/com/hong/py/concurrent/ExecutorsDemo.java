@@ -27,6 +27,24 @@ public class ExecutorsDemo {
         //LinkedBlockingQueue 无界队列，
         ExecutorService executorService2 = Executors.newSingleThreadExecutor();*/
 
+
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        Future<String> submit = executorService.submit(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return "这是一个测试类";
+            }
+        });
+        try {
+            String s = submit.get();
+            System.out.println(s);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+
         //2种schedule ScheduledThreadPoolExecutor是个无界队列，所以只能设置核心线程数
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(3);
         ScheduledExecutorService scheduledExecutorService1 = Executors.newSingleThreadScheduledExecutor();

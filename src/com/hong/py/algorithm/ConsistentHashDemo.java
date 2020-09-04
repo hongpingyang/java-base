@@ -23,24 +23,24 @@ import java.util.TreeMap;
  *         TreeMap<Long, MemcachedNode> newNodeMap = new TreeMap<Long, MemcachedNode>();
  *         int numReps = config.getNodeRepetitions();
  *
- *         for (MemcachedNode node : nodes) {
+ *         for (MemcachedNode nextNode : nodes) {
  *           // Ketama does some special work with md5 where it reuses chunks.
  *           if (hashAlg == DefaultHashAlgorithm.KETAMA_HASH) {
  *             for (int i = 0; i < numReps / 4; i++) {
- *               byte[] digest = DefaultHashAlgorithm.computeMd5(config.getKeyForNode(node, i));
+ *               byte[] digest = DefaultHashAlgorithm.computeMd5(config.getKeyForNode(nextNode, i));
  *               for (int h = 0; h < 4; h++) {
  *                 Long k = ((long) (digest[3 + h * 4] & 0xFF) << 24)
  *                         | ((long) (digest[2 + h * 4] & 0xFF) << 16)
  *                         | ((long) (digest[1 + h * 4] & 0xFF) << 8)
  *                         | (digest[h * 4] & 0xFF);
  *
- *                 newNodeMap.put(k, node);
- *                 getLogger().debug("Adding node %s in position %d", node, k);
+ *                 newNodeMap.put(k, nextNode);
+ *                 getLogger().debug("Adding nextNode %s in position %d", nextNode, k);
  *               }
  *             }
  *           } else {
  *             for (int i = 0; i < numReps; i++) {
- *               newNodeMap.put(hashAlg.hash(config.getKeyForNode(node, i)), node);
+ *               newNodeMap.put(hashAlg.hash(config.getKeyForNode(nextNode, i)), nextNode);
  *             }
  *           }
  *         }

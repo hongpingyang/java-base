@@ -58,7 +58,6 @@ public class StreamTest {
 
         //集合讲的是数据，流讲的是计算。
 
-
         Object stream5 = books.stream().filter(p -> p.toString().contains("spring")).collect(Collectors.toList());
         //顺序串行执行
         Stream stream6 = books.stream().filter(p -> p.toString().contains("spring"));
@@ -223,6 +222,32 @@ public class StreamTest {
         IntStream range = IntStream.range(0, 100);
         LongStream range1 = LongStream.range(100, 200);
 
+        //构建流
+        Stream<String> stringStream = Stream.of("Java 8", "Lambda", "In", "Action");
+        stringStream.forEach(System.out::println);
+
+        int[] numbers = {2, 3, 5, 7, 11, 13};
+        IntStream stream1 = Arrays.stream(numbers);
+        System.out.println(stream1.sum());
+
+        System.out.println("=====创造无限流=====");
+        //创造无限流 不能无限计算下去，应该使用limit(n)加以限制
+        Stream.iterate(0, n -> n + 2).limit(10).forEach(System.out::println);
+
+        System.out.println("=====斐波纳契======");
+        Stream.iterate(new int[]{0,1},
+                t -> new int[]{t[1] ,t[0]+t[1]}).
+                limit(20).
+                forEach(t -> System.out.println("(" + t[0] + "," + t[1] +")"));
+
+
+        //用流收集数据
+        //找出最大值
+        menu.stream().collect(Collectors.maxBy(Comparator.comparingInt(Dish::getCalories))).ifPresent(System.out::println);
+        //找出最小值
+        menu.stream().collect(Collectors.minBy(Comparator.comparingInt(Dish::getCalories))).ifPresent(System.out::println);
+        //汇总
+        //menu.stream().collect(Collectors.summingInt(Dish::getCalories)).to;
 
     }
 }

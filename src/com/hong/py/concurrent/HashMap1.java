@@ -148,7 +148,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      * TreeNodes, each structured similarly to those in
      * java.util.TreeMap. Most methods try to use normal bins, but
      * relay to TreeNode methods when applicable (simply by checking
-     * instanceof a node).  Bins of TreeNodes may be traversed and
+     * instanceof a nextNode).  Bins of TreeNodes may be traversed and
      * used like any others, but additionally support faster lookup
      * when overpopulated. However, since the vast majority of bins in
      * normal use are not overpopulated, checking for existence of
@@ -197,7 +197,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      * 8:    0.00000006
      * more: less than 1 in ten million
      *
-     * The root of a tree bin is normally its first node.  However,
+     * The root of a tree bin is normally its first nextNode.  However,
      * sometimes (currently only upon Iterator.remove), the root might
      * be elsewhere, but can be recovered following parent links
      * (method TreeNode.root()).
@@ -273,7 +273,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
     static final int MIN_TREEIFY_CAPACITY = 64;
 
     /**
-     * Basic hash bin node, used for most entries.  (See below for
+     * Basic hash bin nextNode, used for most entries.  (See below for
      * TreeNode subclass, and in LinkedHashMap for its Entry subclass.)
      */
     static class Node<K,V> implements Map.Entry<K,V> {
@@ -336,6 +336,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      */
     static final int hash(Object key) {
         int h;
+        //高16位和低16位异或
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
     }
 
@@ -572,7 +573,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      *
      * @param hash hash for key
      * @param key the key
-     * @return the node, or null if none
+     * @return the nextNode, or null if none
      */
     final Node<K,V> getNode(int hash, Object key) {
 
@@ -581,7 +582,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         if ((tab = table) != null && (n = tab.length) > 0 &&
                 (first = tab[(n - 1) & hash]) != null) {
             //第一个node匹配上了 hash和key相等，就是你了
-            if (first.hash == hash && // always check first node
+            if (first.hash == hash && // always check first nextNode
                     ((k = first.key) == key || (key != null && key.equals(k))))
                 return first;
             //去找后面的链表或者红黑树
@@ -625,6 +626,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
     public V put(K key, V value) {
+        //对key进行hash
         return putVal(hash(key), key, value, false, true);
     }
 
@@ -634,9 +636,11 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      * @param hash hash for key
      * @param key the key
      * @param value the value to put
-     * @param onlyIfAbsent if true, don't change existing value
+     * @param onlyIfAbsent if true, don't change existing value 可以控制不替换已存在的key的value
      * @param evict if false, the table is in creation mode.
      * @return previous value, or null if none
+     *
+     * //一个key对象改变了， hashcode改变了，导致会找不到了，
      */
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
@@ -650,7 +654,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         //存在了，分情况讨论
         else {
             Node<K,V> e; K k;
-            //如果与第一个 完全一致，hash和key相同，则覆盖。
+            //如果与第一个桶位置的 完全一致，hash和key相同，则覆盖。
             if (p.hash == hash &&
                     ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
@@ -661,7 +665,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
             else {
                 for (int binCount = 0; ; ++binCount) {
 
-                    if ((e = p.next) == null) {
+                    if ((e = p.next) == null) { //尾插法
                         //遍历到链表尾部了，新增一个node，放到最后一个节点的next上
                         p.next = newNode(hash, key, value, null);
                         //如果链表的长度大于等于8了，需要分裂成树
@@ -754,24 +758,24 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
                     oldTab[j] = null;
                     if (e.next == null)
                         //next为null表示后面没有 链表和树，直接找新位置
-                       /**
-                       * HashMap 扩容计算插入节点槽位的方法为：(n - 1) & hash，
-                       * 由于HashMap的容量总是以2的倍数递增，
-                       * 所以，扩容后的容量相比于原容量在二进制表达上，
-                       * 只是最高位前面增加了一位，并且为1。
-                       * 举个例子，容量为16，n - 1为15（0000 1111），
-                       * 扩容后的容量为32，n - 1为31（0001 1111），
-                       * 0001 1111 相比于 0000 1111 只是多了最高位的 1。
-                       * 因此在于hash值做位与运算时，如果hash值该位为1，
-                       * 则新槽位 = 原槽位 + 原容量，否则槽位不变。
-                       */
-                       //减去重新hash函数计算。妙！！！
                         newTab[e.hash & (newCap - 1)] = e;
                     else if (e instanceof TreeNode)
                         //树
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
                     else { // preserve order
                         //链表，分散放置，减少冲突
+                        /**
+                         * HashMap 扩容计算插入节点槽位的方法为：(n - 1) & hash，
+                         * 由于HashMap的容量总是以2的倍数递增，
+                         * 所以，扩容后的容量相比于原容量在二进制表达上，
+                         * 只是最高位前面增加了一位，并且为1。
+                         * 举个例子，容量为16，n - 1为15（0000 1111），
+                         * 扩容后的容量为32，n - 1为31（0001 1111），
+                         * 0001 1111 相比于 0000 1111 只是多了最高位的 1。
+                         * 因此在于hash值做位与运算时，如果hash值该位为1，
+                         * 则新槽位 = 原槽位 + 原容量，否则槽位不变。
+                         */
+                        //减去重新hash函数计算。妙！！！ jdk1.7就是重新计算了hash
                         Node<K,V> loHead = null, loTail = null; //这些的会放到原来的位置
                         Node<K,V> hiHead = null, hiTail = null; //这些的会放到原来的位置 + oldCap的位置
                         Node<K,V> next;
@@ -871,7 +875,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      * @param value the value to match if matchValue, else ignored
      * @param matchValue if true only remove if value is equal
      * @param movable if false do not move other nodes while removing
-     * @return the node, or null if none
+     * @return the nextNode, or null if none
      */
     final Node<K,V> removeNode(int hash, Object key, Object value,
                                boolean matchValue, boolean movable) {
@@ -1562,7 +1566,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
 
     static class HashMapSpliterator<K,V> {
         final HashMap1<K,V> map;
-        Node<K,V> current;          // current node
+        Node<K,V> current;          // current nextNode
         int index;                  // current index, modified on advance/split
         int fence;                  // one past last index
         int est;                    // size estimate
@@ -1825,7 +1829,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
      * classes, and HashSet.
      */
 
-    // Create a regular (non-tree) node
+    // Create a regular (non-tree) nextNode
     Node<K,V> newNode(int hash, K key, V value, Node<K,V> next) {
         return new Node<>(hash, key, value, next);
     }
@@ -1835,7 +1839,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         return new Node<>(p.hash, p.key, p.value, next);
     }
 
-    // Create a tree bin node
+    // Create a tree bin nextNode
     TreeNode<K,V> newTreeNode(int hash, K key, V value, Node<K,V> next) {
         return new TreeNode<>(hash, key, value, next);
     }
@@ -1888,7 +1892,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
     /**
      * Entry for Tree bins. Extends LinkedHashMap.Entry (which in turn
      * extends Node) so can be used as extension of either regular or
-     * linked node.
+     * linked nextNode.
      */
     static final class TreeNode<K,V> extends Entry<K,V> {
         TreeNode<K,V> parent;  // red-black tree links
@@ -1901,7 +1905,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Returns root of tree containing this node.
+         * Returns root of tree containing this nextNode.
          */
         final TreeNode<K,V> root() {
             for (TreeNode<K,V> r = this, p;;) {
@@ -1912,7 +1916,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Ensures that the given root is the first node of its bin.
+         * Ensures that the given root is the first nextNode of its bin.
          */
         static <K,V> void moveRootToFront(Node<K,V>[] tab, TreeNode<K,V> root) {
             int n;
@@ -1937,7 +1941,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Finds the node starting at root p with the given hash and key.
+         * Finds the nextNode starting at root p with the given hash and key.
          * The kc argument caches comparableClassFor(key) upon first use
          * comparing keys.
          */
@@ -1970,7 +1974,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Calls find for root node.
+         * Calls find for root nextNode.
          */
         final TreeNode<K,V> getTreeNode(int h, Object k) {
             return ((parent != null) ? root() : this).find(h, k, null);
@@ -1994,7 +1998,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Forms tree of the nodes linked from this node.
+         * Forms tree of the nodes linked from this nextNode.
          *
          */
         final void treeify(Node<K,V>[] tab) {
@@ -2051,7 +2055,7 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
 
         /**
          * Returns a list of non-TreeNodes replacing those linked from
-         * this node.
+         * this nextNode.
          * 退化为链表
          */
         final Node<K,V> untreeify(HashMap1<K,V> map) {
@@ -2117,9 +2121,9 @@ public class HashMap1<K,V> extends AbstractMap<K,V>
         }
 
         /**
-         * Removes the given node, that must be present before this call.
+         * Removes the given nextNode, that must be present before this call.
          * This is messier than typical red-black deletion code because we
-         * cannot swap the contents of an interior node with a leaf
+         * cannot swap the contents of an interior nextNode with a leaf
          * successor that is pinned by "next" pointers that are accessible
          * independently during traversal. So instead we swap the tree
          * linkages. If the current tree appears to have too few nodes,

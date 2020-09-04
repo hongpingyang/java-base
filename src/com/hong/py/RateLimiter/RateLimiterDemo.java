@@ -39,17 +39,20 @@ public class RateLimiterDemo {
     // 当变为0 的时候会打破barrier，调用Condition的sinalAll()去唤醒所有线程。
     static CyclicBarrier cyclicBarrier=new CyclicBarrier(10);
 
-    //代表每秒生成10个令牌
+    //代表每秒生成10个令牌 使用的令牌桶算法，平均速率生成令牌。
+    //支持平滑突发限流、平滑预热限流
     //还可以通过Semaphore来实现。
     static RateLimiter rateLimiter = RateLimiter.create(10);
 
     public static void main(String[] args) throws InterruptedException {
 
-        for (int i = 0; i < 10; i++) {
+       /* for (int i = 0; i < 10; i++) {
             Mythread mythread = new Mythread();
             Thread.sleep(1000);
             mythread.start();
-        }
+        }*/
+
+        testRateLimit();
     }
 
 
@@ -81,6 +84,12 @@ public class RateLimiterDemo {
 
 
         }
+    }
+
+    public static void testRateLimit() {
+        System.out.println(rateLimiter.acquire());
+        System.out.println(rateLimiter.acquire());
+        System.out.println(rateLimiter.acquire());
     }
 
 }

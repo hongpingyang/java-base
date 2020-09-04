@@ -54,7 +54,7 @@ public class CopyOnWriteArrayListDemo {
 
         List<Integer> list = new CopyOnWriteArrayList<>();
 
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 10; i++)
         {
             list.add(i);
         }
@@ -88,7 +88,7 @@ public class CopyOnWriteArrayListDemo {
         public void run()
         {
 
-            for (Integer i : list)
+            for (Integer i : list) //get和查询CopyOnWriteArrayList没有lock
             {
                 System.out.println("查询"+Thread.currentThread().getName()+" : "+ i);
             }
@@ -109,7 +109,7 @@ public class CopyOnWriteArrayListDemo {
         {
             for (int i = 0; i < list.size(); i++)
             {
-                list.remove(i);
+                list.remove(i); //添加和删除 CopyOnWriteArrayList会有一个lock，保证安全
                 System.out.println("删除"+Thread.currentThread().getName()+" : "+ i);
             }
         }

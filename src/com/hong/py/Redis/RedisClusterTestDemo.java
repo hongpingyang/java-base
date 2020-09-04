@@ -25,6 +25,15 @@ import java.util.Set;
  **/
 public class RedisClusterTestDemo {
 
+    /**
+     *  Redis常见的五大数据类型：
+     *  stringRedisTemplate.opsForValue();[String(字符串)]
+     *  stringRedisTemplate.opsForList();[List(列表)]
+     *  stringRedisTemplate.opsForSet();[Set(集合)]
+     *  stringRedisTemplate.opsForHash();[Hash(散列)]
+     *  stringRedisTemplate.opsForZSet();[ZSet(有序集合)]
+     */
+
     public static void main(String[] args) {
 
         // 添加集群的服务节点Set集合

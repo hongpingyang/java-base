@@ -127,7 +127,7 @@ public class SellApple {
             return o1.getAge().compareTo(o2.getAge());
         });
 
-        // 提取一个Comparator
+        // 提取一个Comparatorstudents
         students.sort(Comparator.comparing((Student o1)-> o1.getAge()));
         students.sort(Comparator.comparing(Student::getAge));
         //逆序

@@ -16,6 +16,7 @@ public class FileInputStreamDemo {
         BufferedInputStream stream1 = new BufferedInputStream(stream);
         BufferedOutputStream outputStream1 = new BufferedOutputStream(outputStream);
 
+        //字符流 一个字符多个字节，所以字节流是字符流的基础
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream, "utf-8"));
         BufferedReader reader = bufferedReader;
 

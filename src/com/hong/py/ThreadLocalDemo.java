@@ -72,7 +72,8 @@ public class ThreadLocalDemo {
                 e.printStackTrace();
             }
             System.out.println("当前线程"+Thread.currentThread().getName()+" : "+doGet()+" : "+doMyGet());
-
+            //释放
+            local.remove();
         }
     }
 
@@ -90,4 +91,5 @@ public class ThreadLocalDemo {
     private static Integer doGet() {
         return local.get();
     }
+
 }

@@ -38,6 +38,8 @@ public class Day6 {
         for (int ins : ints) {
             System.out.println(ins);
         }
+        ListNode1 listNode1 = new ListNode1();
+
     }
 
 
@@ -79,4 +81,25 @@ public class Day6 {
       ListNode next;
       ListNode(int x) { val = x; }
    }
+
+
+    public static class ListNode1{
+        int key;
+        ListNode next;
+
+        public int getKey(){
+            return key;
+        }
+        public void setKey(int key){
+            this.key=key;
+        }
+
+        public void setNext(ListNode node){
+            this.next=node;
+        }
+        public ListNode getListNode(){
+            return this.next;
+        }
+
+    }
 }

@@ -24,6 +24,7 @@ public class ThreadRunDemo {
         //run并非是myThread执行的，而是由当前的线程执行了。
         myThread.run();
         //myThread.start();
+        //myThread.interrupt();
     }
 
     public static class myRunable implements Runnable {

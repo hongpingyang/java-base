@@ -6,6 +6,7 @@ import com.hong.py.concurrent.Semaphore_Source;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
@@ -35,7 +36,7 @@ public class SemaphoreTest {
 
     private volatile Semaphore_Source executesLimit;
     private static List<Thread> testThreads = new ArrayList<>();
-    public static void main(String[] args) throws InterruptedException {
+    public static void main1(String[] args) throws InterruptedException {
 
         SemaphoreTest test = new SemaphoreTest();
         //允许的最大并行执行线程为5
@@ -125,5 +126,122 @@ public class SemaphoreTest {
             }
         return executesLimit;
     }
+
+    public static void main(String[] args){
+        Scanner scanner=new Scanner(System.in);
+        while(scanner.hasNext()){
+            int count=scanner.nextInt();
+            SemaphoreTest m=new SemaphoreTest();
+            m.doRun(count);
+        }
+    }
+
+    public void doRun(int count){
+        //System.out.println(count);
+        //ExecutorService extor=Executors.newFixedThreadPool(4);
+        //extor.execute(new thread1(count));
+        //extor.
+        // extor.execute(new thread2(count));
+        //extor.execute(new thread3(count));
+        //extor.execute(new thread4(count));
+        Thread thread1=new Thread(new thread1(count));
+        thread1.start();
+        Thread thread2=new Thread(new thread2(count));
+        thread2.start();
+        Thread thread3=new Thread(new thread3(count));
+        thread3.start();
+        Thread thread4=new Thread(new thread4(count));
+        thread4.start();
+
+    }
+
+    private static Semaphore s1=new Semaphore(1);
+    private static Semaphore s2=new Semaphore(0);
+    private static Semaphore s3=new Semaphore(0);
+    private static Semaphore s4=new Semaphore(0);
+
+    public  class thread1 implements Runnable {
+        private int n;
+        public thread1(int n){
+            this.n=n;
+        }
+
+        @Override
+        public void run(){
+            for(int i=0;i<n;i++)
+            {
+                try{
+                    s1.acquire(1);
+                }catch(Exception e){
+
+                }
+                System.out.print("A");
+                //s1.release(1);
+                s2.release(1); //s2可以执行
+            }
+        }
+    }
+
+    public  class thread2 implements Runnable {
+        private int n;
+        public thread2(int n){
+            this.n=n;
+        }
+        @Override
+        public void run(){
+            for(int i=0;i<n;i++)
+            {
+                try{
+                    s2.acquire(1);
+                }catch(Exception e){
+
+                }
+                System.out.print("B");
+                s3.release(1); //s3可以执行
+            }
+        }
+    }
+
+    public  class thread3 implements Runnable {
+        private int n;
+        public thread3(int n){
+            this.n=n;
+        }
+        @Override
+        public void run(){
+            for(int i=0;i<n;i++)
+            {
+                try{
+                    s3.acquire(1);
+                }catch(Exception e){
+
+                }
+                System.out.print("C");
+                s4.release(1); //s4可以执行
+            }
+        }
+    }
+
+
+    public  class thread4 implements Runnable {
+        private int n;
+        public thread4(int n){
+            this.n=n;
+        }
+        @Override
+        public void run(){
+            for(int i=0;i<n;i++)
+            {
+                try{
+                    s4.acquire(1);
+                }catch(Exception e){
+
+                }
+                System.out.print("D");
+                s1.release(1); //s1可以执行
+            }
+        }
+    }
+
 
 }

@@ -546,7 +546,7 @@ public abstract class ForkJoinTask_Source<V> implements Future<V>, Serializable 
     }
 
     /**
-     * Removes exception node and clears status.
+     * Removes exception nextNode and clears status.
      */
     private void clearExceptionalCompletion() {
         int h = System.identityHashCode(this);
@@ -1361,7 +1361,7 @@ public abstract class ForkJoinTask_Source<V> implements Future<V>, Serializable 
      * Among other applications, tags can be used as visit markers
      * in tasks operating on graphs, as in methods that check: {@code
      * if (task.compareAndSetForkJoinTask_SourceTag((short)0, (short)1))}
-     * before processing, otherwise exiting because the node has
+     * before processing, otherwise exiting because the nextNode has
      * already been visited.
      *
      * @param e the expected tag value

@@ -43,6 +43,9 @@ public class Generics {
         //  也可以添加通配符泛型元素
         List<? extends String> names1 = Lists.newArrayList("yiifee");
 
+        //会报错
+        //names1.add(superallNames);
+
         superallNames.addAll(names1);
 
         //针对采用“? super T”通配符的集合，对其遍历时需要多一次转型，如下：

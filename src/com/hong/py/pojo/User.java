@@ -1,5 +1,10 @@
 package com.hong.py.pojo;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * 文件描述
  *
@@ -16,7 +21,14 @@ package com.hong.py.pojo;
  * <p>
  * Copyright © 2019 hongpy Technologies Inc. All Rights Reserved
  **/
-public class User {
+
+/**
+ * 这里的关键区别是我们如何处理序列化过程。
+ * 当类实现java.io.Serializable接口时，JVM完全负责序列化类实例。
+ * 在Externalizable的情况下，程序员应该负责整个序列化和反序列化过程
+ *
+ */
+public class User implements Externalizable {
 
     private String userName;
     private String nickName;
@@ -43,5 +55,15 @@ public class User {
                 "userName='" + userName + '\'' +
                 ", nickName='" + nickName + '\'' +
                 '}';
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+
     }
 }

@@ -23,7 +23,6 @@ import java.util.concurrent.*;
  * 如果当时我们设置成无界队列，线程池的队列就会越来越多，有可能会撑满内存，导致整个系统不可用，而不只是后台任务出现问题。
  * 当然我们的系统所有的任务是用的单独的服务器部署的，而我们使用不同规模的线程池跑不同类型的任务，但是出现这样问题时也会影响到其他任务。
  *
- * submit方法会吃掉异常 execute方法不会
  *
  *
  * 线程池的设计：加入队列的设计，是为了避免多线程执行时全局锁，当允许的线程数大于核心线程数的后，加入队列不需要全局锁，
@@ -39,6 +38,7 @@ import java.util.concurrent.*;
  */
 public class ThreadPoolExecutorDemo {
 
+    volatile static int finalI = 0;
     public static void main(String[] args) throws InterruptedException {
 
         MyThreadPoolExecutor executor = new MyThreadPoolExecutor(5,
@@ -50,18 +50,27 @@ public class ThreadPoolExecutorDemo {
         System.out.println(Thread.currentThread().getName()+"主线程");
 
         try {
-            for (int i = 0; i < 30; i++) {
+            for (int i = 0; i < 10; i++) {
 
-                int finalI = i;
-                executor.submit(() -> {
+                //submit 会吞掉异常，使用  Future去获取异常
+                Future<String> submit = executor.submit(() -> {
+                    finalI++;
                     Thread.sleep(500);
-                    if (finalI == 22) {
+                    if (finalI == 2) {
                         int i1 = finalI / 0;
                     }
-                    System.out.println(Thread.currentThread().getName() + "这是个线程池");
+                    System.out.println(Thread.currentThread().getName() + "这是个哈哈线程池");
                     return "哈哈";
                 });
 
+                try {
+                    String s = submit.get();
+                    System.out.println(s);
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+
+                //会抛出异常 ，但其它的还能task正常执行
                 executor.execute(() -> {
                     try {
                         if (finalI != 7) {
@@ -120,6 +129,9 @@ public class ThreadPoolExecutorDemo {
         @Override
         protected void afterExecute(Runnable r, Throwable t) {
             super.afterExecute(r, t);
+            if (t != null) {
+                //有异常得处理异常
+            }
             //System.out.println(t.getMessage());
         }
 

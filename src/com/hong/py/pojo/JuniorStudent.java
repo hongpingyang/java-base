@@ -6,10 +6,10 @@ package com.hong.py.pojo;
  * description:
  * life for code
  */
-public class JuniorStudent extends Student implements IStudent,Comparable<JuniorStudent> {
+public class JuniorStudent extends Student implements IStudent {
 
     @Override
-    public int compareTo(JuniorStudent o) {
+    public int compareTo(Student o) {
         if(o.getAge()>this.getAge())
             return 1;
         if(o.getAge()<this.getAge())
