@@ -9,6 +9,6 @@ package com.hong.py.algorithm;
 public class Day7 {
 
     public static void main(String[] args) {
-
+      //this is master
     }
 }
