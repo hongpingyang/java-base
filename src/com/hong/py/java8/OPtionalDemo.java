@@ -11,6 +11,8 @@ import java.util.Optional;
 public class OPtionalDemo {
 
     public static void main(String[] args) {
-        //Optional<String> optionalS="this";
+
+        Optional<String> optionalS=new Optional<>("this");
+
     }
 }

@@ -87,6 +87,8 @@ public class Hello {
         //必须实例化才能访问，可以访问内部类的私有和公有字段
         System.out.println(littleHello1.name1);
         System.out.println(littleHello1.age1);
+
+
     }
 
 
